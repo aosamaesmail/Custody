@@ -55,6 +55,7 @@ button:disabled{opacity:.55;cursor:not-allowed}
     <input id="lpin" type="password" inputmode="numeric" maxlength="8" autocomplete="off">
     <button id="loginBtn" class="primary" onclick="doLogin()">Login / دخول</button>
     <div id="loginMsg" class="msg err"></div>
+    <button class="secondary" style="width:100%;margin-top:14px" onclick="openAdminLogin()">Admin login / دخول الإدارة</button>
   </div>
 </div>
 
@@ -62,7 +63,7 @@ button:disabled{opacity:.55;cursor:not-allowed}
   <aside class="sidebar">
     <div class="brand">Custody Expenses</div>
     <div class="nav">
-      <button data-icon="home" onclick="showPage('home')">Home</button>
+      <button data-icon="home" onclick="goHome()">Home</button>
       <button data-icon="admin" onclick="openAdminLogin()">Admin</button>
       <button data-icon="logout" class="danger" onclick="doEngineerLogout()">Log out</button>
     </div>
@@ -189,8 +190,8 @@ function fill(id,list,placeholder){
 }
 async function api(action,data){
   const res=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,data:data||{}})});
-  const r=await res.json();
-  return r;
+  const text=await res.text();
+  try{return JSON.parse(text)}catch(e){throw new Error('Server returned HTTP '+res.status+' (not JSON). Check /api/backend on Vercel.')}
 }
 async function init(){
   try{
@@ -219,6 +220,7 @@ async function doLogin(){
 }
 async function doEngineerLogout(){
   if(engineerToken)try{await api('logout',{token:engineerToken})}catch(e){}
+  if(adminToken)try{await api('adminLogout',{token:adminToken})}catch(e){}
   engineerToken=null;adminToken=null;
   $('appView').classList.add('hidden');$('loginView').classList.remove('hidden');
   $('adminPage').classList.add('hidden');$('homePage').classList.remove('hidden');
@@ -302,7 +304,9 @@ async function doAdminLogin(){
   try{
     const r=await api('adminLogin',{pin:$('adminPin').value});
     if(!r.ok)return setMsg('adminLoginMsg',r.error,'err');
-    adminToken=r.token;closeAdminLogin();showPage('admin');await loadEngineers();showAdminTab('engineers');
+    adminToken=r.token;closeAdminLogin();
+    if(!engineerToken){$('hello').textContent='Admin';$('roleBadge').textContent='ADMIN';$('loginView').classList.add('hidden');$('appView').classList.remove('hidden')}
+    showPage('admin');await loadEngineers();showAdminTab('engineers');
   }catch(e){setMsg('adminLoginMsg','Connection problem: '+(e.message||e),'err')}
 }
 async function loadEngineers(){
@@ -367,8 +371,11 @@ async function downloadTransferTemplate(){
 }
 async function adminLogout(){
   if(adminToken)try{await api('adminLogout',{token:adminToken})}catch(e){}
-  adminToken=null;showPage('home');setMsg('adminMsg','');
+  adminToken=null;setMsg('adminMsg','');
+  if(engineerToken){showPage('home')}
+  else{$('appView').classList.add('hidden');$('loginView').classList.remove('hidden');$('adminPage').classList.add('hidden');$('homePage').classList.remove('hidden')}
 }
+function goHome(){ if(!engineerToken){adminLogout();return} showPage('home') }
 $('adminPin').addEventListener('keydown',e=>{if(e.key==='Enter')doAdminLogin()});
 init();
 </script>
