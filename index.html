@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Custody Expenses</title>
+<style>
+*{box-sizing:border-box}
+:root{--blue:#1a73e8;--bg:#f3f4f6;--text:#111827;--muted:#6b7280;--border:#d1d5db}
+body{margin:0;font-family:Arial,Tahoma,sans-serif;background:var(--bg);color:var(--text)}
+button,input,select,textarea{font:inherit}
+.hidden{display:none!important}
+.app{min-height:100vh;display:flex}
+.sidebar{width:230px;background:#111827;color:#fff;position:fixed;inset:0 auto 0 0;padding:18px 14px;z-index:20}
+.brand{font-size:20px;font-weight:700;padding:8px 10px 24px}
+.nav button{width:100%;text-align:left;background:transparent;color:#e5e7eb;border:0;padding:12px 10px;border-radius:9px;margin:3px 0;cursor:pointer}
+.nav button:hover{background:#1f2937}
+.nav .danger{color:#fecaca}
+.content{margin-left:230px;width:100%;padding:24px}
+.container{max-width:900px;margin:auto}
+.card{background:#fff;border-radius:12px;padding:18px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.10)}
+h1{font-size:24px;margin:0 0 18px} h2{font-size:18px;margin:0 0 12px}
+label{display:block;font-size:13px;color:#374151;margin:11px 0 5px}
+input,select,textarea{width:100%;padding:11px;font-size:16px;border:1px solid var(--border);border-radius:8px;background:#fff}
+button.primary{width:100%;padding:13px;font-size:16px;border:0;border-radius:8px;background:var(--blue);color:#fff;margin-top:15px;cursor:pointer}
+button.secondary{background:#e5e7eb;color:#111827;border:0;border-radius:8px;padding:9px 13px;cursor:pointer}
+button.small{padding:9px 12px;border:0;border-radius:8px;background:var(--blue);color:#fff;cursor:pointer}
+button:disabled{opacity:.55;cursor:not-allowed}
+.row{display:flex;gap:12px}.row>div{flex:1}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}
+.msg{margin-top:10px;font-size:14px}.err{color:#b91c1c}.ok{color:#047857}
+.bal{font-size:14px;margin-bottom:8px}.bar{height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden}.bar div{height:100%;background:#10b981}
+.item{border-top:1px solid #e5e7eb;padding:10px 0;font-size:14px}.item small{color:var(--muted);display:block}
+.tag{display:inline-block;font-size:12px;padding:2px 8px;border-radius:10px;background:#e5e7eb;margin:4px 4px 0 0}
+.login-wrap{max-width:440px;margin:8vh auto}.admin-badge{display:inline-block;padding:4px 8px;background:#fee2e2;color:#991b1b;border-radius:12px;font-size:12px}
+.pin-box{font-size:30px;letter-spacing:7px;font-weight:700;text-align:center;background:#f9fafb}
+.search-note{font-size:12px;color:var(--muted);margin-top:4px}
+@media(max-width:700px){
+ .sidebar{width:74px;padding:12px 8px}.brand{font-size:0;text-align:center;padding:8px 0 20px}.brand:after{content:"CE";font-size:20px}
+ .nav button{font-size:0;text-align:center;padding:13px 5px}.nav button:before{font-size:18px}
+ .nav button[data-icon="home"]:before{content:"🏠"}.nav button[data-icon="admin"]:before{content:"🔐"}.nav button[data-icon="logout"]:before{content:"↪"}
+ .content{margin-left:74px;padding:14px}.row{flex-direction:column}.top h1{font-size:20px}
+}
+</style>
+</head>
+<body>
+<div id="loginView" class="login-wrap">
+  <div class="card">
+    <h1>Custody Expenses</h1>
+    <div style="color:#6b7280;margin-bottom:15px">Engineer Login / دخول المهندس</div>
+    <label>Engineer Name / اسم المهندس</label>
+    <input id="lname" list="engineerLoginList" autocomplete="off" placeholder="Select or type your name">
+    <datalist id="engineerLoginList"></datalist>
+    <label>PIN / الرقم السري</label>
+    <input id="lpin" type="password" inputmode="numeric" maxlength="6" autocomplete="off">
+    <button id="loginBtn" class="primary" onclick="doLogin()">Login / دخول</button>
+    <div id="loginMsg" class="msg err"></div>
+  </div>
+</div>
+
+<div id="appView" class="app hidden">
+  <aside class="sidebar">
+    <div class="brand">Custody Expenses</div>
+    <div class="nav">
+      <button data-icon="home" onclick="showPage('home')">Home</button>
+      <button data-icon="admin" onclick="openAdminLogin()">Admin</button>
+      <button data-icon="logout" class="danger" onclick="doEngineerLogout()">Log out</button>
+    </div>
+  </aside>
+
+  <main class="content">
+    <div class="container">
+      <section id="homePage">
+        <div class="top">
+          <h1 id="hello"></h1>
+          <span class="admin-badge" id="roleBadge">ENGINEER</span>
+        </div>
+
+        <div class="card">
+          <div class="bal" id="balText"></div>
+          <div class="bar"><div id="balBar" style="width:0%"></div></div>
+        </div>
+
+        <div class="card">
+          <h2>New expense / مصروف جديد</h2>
+          <div class="row">
+            <div><label>Date / التاريخ</label><input id="fdate" type="date"></div>
+            <div><label>Amount / المبلغ (EGP)</label><input id="famount" type="number" inputmode="decimal" min="0" step="0.01"></div>
+          </div>
+          <label>Category / النوع</label><select id="fcat"></select>
+          <label>Project / المشروع</label><select id="fproj"></select>
+          <label>Description / البيان</label><textarea id="fdesc" rows="2" maxlength="300"></textarea>
+          <label>Receipt photo / صورة الإيصال</label>
+          <input id="fimg" type="file" accept="image/*" capture="environment">
+          <label style="display:flex;gap:8px;align-items:center;margin-top:12px">
+            <input id="fnoreceipt" type="checkbox" style="width:auto" onchange="toggleNoReceipt()"> No receipt available / لا يوجد إيصال
+          </label>
+          <div id="noReceiptBox" class="hidden">
+            <label>Reason / السبب</label><input id="fwhy" maxlength="200">
+          </div>
+          <button id="submitBtn" class="primary" onclick="doSubmit()">Submit / إرسال</button>
+          <div id="submitMsg" class="msg"></div>
+        </div>
+
+        <div class="card">
+          <h2>My latest expenses / آخر مصروفاتي</h2>
+          <div id="list"></div>
+        </div>
+      </section>
+
+      <section id="adminPage" class="hidden">
+        <div class="top">
+          <h1>Admin</h1>
+          <button class="secondary" onclick="adminLogout()">Admin Log out</button>
+        </div>
+
+        <div class="card">
+          <h2>Engineer PIN Management</h2>
+          <label>Engineer Name / اسم المهندس</label>
+          <input id="adminEngineer" list="adminEngineerList" autocomplete="off" placeholder="Search engineer name">
+          <datalist id="adminEngineerList"></datalist>
+          <div class="search-note">Names come from the Google Sheet Config tab.</div>
+
+          <div class="row" style="margin-top:10px">
+            <div>
+              <label>Generated PIN</label>
+              <input id="generatedPin" class="pin-box" readonly placeholder="------">
+            </div>
+            <div style="display:flex;align-items:end">
+              <button id="generateBtn" class="small" style="width:100%" onclick="generateEngineerPin()">Generate / Regenerate PIN</button>
+            </div>
+          </div>
+
+          <button class="secondary" style="margin-top:12px" onclick="saveEngineerName()">Add Engineer Name</button>
+          <div class="search-note">If the name is not already in Config, this adds it and generates a PIN.</div>
+          <div id="adminMsg" class="msg"></div>
+        </div>
+
+        <div class="card">
+          <h2>Config</h2>
+          <div style="color:#6b7280;font-size:14px">
+            The Google Sheet <b>Config</b> tab contains:
+            <br><b>Column A:</b> Engineer Name
+            <br><b>Column B:</b> Pin Created
+            <br><b>Column C:</b> Custody Limit
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<div id="adminLoginModal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:50;display:flex;align-items:center;justify-content:center;padding:20px">
+  <div class="card" style="width:100%;max-width:380px">
+    <h2>Admin Login</h2>
+    <label>Admin PIN</label>
+    <input id="adminPin" type="password" inputmode="numeric" autocomplete="off">
+    <button class="primary" onclick="doAdminLogin()">Login</button>
+    <button class="secondary" style="width:100%;margin-top:10px" onclick="closeAdminLogin()">Cancel</button>
+    <div id="adminLoginMsg" class="msg err"></div>
+  </div>
+</div>
+
+<script>
+const API = '/api/backend';
+let engineerToken = null;
+let adminToken = null;
+let cfg = null;
+
+function $(id){return document.getElementById(id)}
+function setMsg(id,text,cls){const e=$(id);e.textContent=text;e.className='msg '+(cls||'')}
+function fill(id,list,placeholder){
+  const s=$(id);s.innerHTML='';
+  if(placeholder){const p=document.createElement('option');p.value='';p.textContent=placeholder;s.appendChild(p)}
+  (list||[]).forEach(x=>{const o=document.createElement('option');o.value=x;o.textContent=x;s.appendChild(o)})
+}
+async function api(action,data){
+  const res=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,data:data||{}})});
+  const r=await res.json();
+  return r;
+}
+async function init(){
+  try{
+    cfg=await api('getConfig',{});
+    if(cfg.ok){
+      fill('fcat',cfg.categories,'Select...');
+      fill('fproj',cfg.projects,cfg.projects.length===1?null:'Select...');
+    }
+  }catch(e){console.error(e)}
+  $('fdate').value=new Date().toISOString().slice(0,10);
+}
+async function doLogin(){
+  $('loginBtn').disabled=true;setMsg('loginMsg','');
+  try{
+    const r=await api('login',{name:$('lname').value,pin:$('lpin').value});
+    if(!r.ok){setMsg('loginMsg',r.error,'err');return}
+    engineerToken=r.token;$('lpin').value='';
+    $('hello').textContent='Hello, '+r.name;
+    $('roleBadge').textContent='ENGINEER';
+    $('loginView').classList.add('hidden');$('appView').classList.remove('hidden');
+    showPage('home');refresh();
+  }catch(e){setMsg('loginMsg','Connection problem. Try again.','err')}
+  finally{$('loginBtn').disabled=false}
+}
+async function doEngineerLogout(){
+  if(engineerToken)try{await api('logout',{token:engineerToken})}catch(e){}
+  engineerToken=null;adminToken=null;
+  $('appView').classList.add('hidden');$('loginView').classList.remove('hidden');
+  $('adminPage').classList.add('hidden');$('homePage').classList.remove('hidden');
+  $('lname').value='';$('lpin').value='';
+}
+function expired(){
+  engineerToken=null;
+  $('appView').classList.add('hidden');$('loginView').classList.remove('hidden');
+  setMsg('loginMsg','Session expired. Please log in again.','err');
+}
+function showPage(page){
+  $('homePage').classList.toggle('hidden',page!=='home');
+  $('adminPage').classList.toggle('hidden',page!=='admin');
+}
+async function refresh(){
+  if(!engineerToken)return;
+  const r=await api('getMyExpenses',{token:engineerToken});
+  if(r.expired)return expired();
+  if(!r.ok)return;
+  const pct=r.limit?Math.min(100,Math.round(r.outstanding/r.limit*100)):0;
+  $('balText').textContent='Outstanding: '+r.outstanding+' of '+r.limit+' EGP (الرصيد المستخدم)';
+  $('balBar').style.width=pct+'%';$('balBar').style.background=pct>=100?'#ef4444':'#10b981';
+  const list=$('list');list.innerHTML='';
+  if(!r.items.length){list.textContent='No expenses yet.';return}
+  r.items.forEach(it=>{
+    const d=document.createElement('div');d.className='item';
+    const t=document.createElement('div');t.textContent=it.amount+' EGP - '+it.description;d.appendChild(t);
+    const s=document.createElement('small');s.textContent=it.date+' | '+it.category;d.appendChild(s);
+    [['PM',it.pm],['Finance',it.fin]].forEach(x=>{const g=document.createElement('span');g.className='tag';g.textContent=x[0]+': '+x[1];d.appendChild(g)});
+    if(it.flag){const f=document.createElement('small');f.style.color='#b45309';f.textContent=it.flag;d.appendChild(f)}
+    list.appendChild(d);
+  });
+}
+function toggleNoReceipt(){
+  const on=$('fnoreceipt').checked;$('noReceiptBox').classList.toggle('hidden',!on);
+  if(on)$('fimg').value='';
+}
+function readImage(file){
+  return new Promise((resolve,reject)=>{
+    const img=new Image(),url=URL.createObjectURL(file);
+    img.onload=()=>{
+      const s=Math.min(1,1400/Math.max(img.width,img.height));
+      const c=document.createElement('canvas');c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);
+      resolve(c.toDataURL('image/jpeg',.75).split(',')[1]);
+    };
+    img.onerror=()=>reject(new Error('Could not read the photo'));img.src=url;
+  });
+}
+async function doSubmit(){
+  setMsg('submitMsg','');
+  const payload={date:$('fdate').value,amount:$('famount').value,category:$('fcat').value,project:$('fproj').value,
+    description:$('fdesc').value,noReceiptReason:$('fnoreceipt').checked?$('fwhy').value:'',image:''};
+  if(!payload.date||!payload.amount||!payload.category||!payload.project||!payload.description.trim())
+    return setMsg('submitMsg','Please fill all fields.','err');
+  const file=$('fimg').files[0];
+  if(!file&&!$('fnoreceipt').checked)return setMsg('submitMsg','Take a receipt photo, or tick "No receipt".','err');
+  $('submitBtn').disabled=true;setMsg('submitMsg','Uploading...');
+  try{
+    if(file)payload.image=await readImage(file);
+    const r=await api('submitExpense',{token:engineerToken,payload});
+    if(r.expired)return expired();
+    if(!r.ok)return setMsg('submitMsg',r.error,'err');
+    setMsg('submitMsg','Saved / تم الحفظ','ok');
+    ['famount','fdesc','fimg','fwhy'].forEach(id=>$(id).value='');
+    $('fnoreceipt').checked=false;toggleNoReceipt();refresh();
+  }catch(e){setMsg('submitMsg','Connection problem. Not saved - try again.','err')}
+  finally{$('submitBtn').disabled=false}
+}
+
+/* ---------- Admin ---------- */
+function openAdminLogin(){
+  $('adminLoginModal').classList.remove('hidden');$('adminPin').value='';setMsg('adminLoginMsg','');
+  setTimeout(()=>$('adminPin').focus(),50);
+}
+function closeAdminLogin(){$('adminLoginModal').classList.add('hidden')}
+async function doAdminLogin(){
+  setMsg('adminLoginMsg','');
+  try{
+    const r=await api('adminLogin',{pin:$('adminPin').value});
+    if(!r.ok)return setMsg('adminLoginMsg',r.error,'err');
+    adminToken=r.token;closeAdminLogin();showPage('admin');loadEngineers();
+  }catch(e){setMsg('adminLoginMsg','Connection problem.','err')}
+}
+async function loadEngineers(){
+  const r=await api('getEngineers',{adminToken});
+  if(!r.ok){if(r.error==='Admin session required')adminLogout();return}
+  fill('adminEngineerList',r.engineers);
+}
+async function generateEngineerPin(){
+  const name=$('adminEngineer').value.trim();
+  if(!name)return setMsg('adminMsg','Select an engineer first.','err');
+  $('generateBtn').disabled=true;setMsg('adminMsg','Generating...');
+  try{
+    const r=await api('generatePin',{adminToken,name});
+    if(!r.ok)return setMsg('adminMsg',r.error,'err');
+    $('generatedPin').value=r.pin;
+    setMsg('adminMsg','PIN created for '+r.name+'. Save/share this PIN securely with the engineer.','ok');
+    loadEngineers();
+  }catch(e){setMsg('adminMsg','Connection problem.','err')}
+  finally{$('generateBtn').disabled=false}
+}
+async function saveEngineerName(){
+  const name=$('adminEngineer').value.trim();
+  if(!name)return setMsg('adminMsg','Enter an engineer name.','err');
+  const existing=Array.from($('adminEngineerList').options).some(o=>o.value.toLowerCase()===name.toLowerCase());
+  if(existing)return setMsg('adminMsg','Engineer already exists. Use Generate / Regenerate PIN.','err');
+  const pin=String(Math.floor(100000+Math.random()*900000));
+  try{
+    const r=await api('createEngineer',{adminToken,name,pin});
+    if(!r.ok)return setMsg('adminMsg',r.error,'err');
+    $('generatedPin').value=r.pin;
+    setMsg('adminMsg','Engineer added and PIN created.','ok');loadEngineers();
+  }catch(e){setMsg('adminMsg','Connection problem.','err')}
+}
+async function adminLogout(){
+  if(adminToken)try{await api('adminLogout',{token:adminToken})}catch(e){}
+  adminToken=null;showPage('home');setMsg('adminMsg','');
+}
+$('adminPin').addEventListener('keydown',e=>{if(e.key==='Enter')doAdminLogin()});
+init();
+</script>
+</body>
+</html>
