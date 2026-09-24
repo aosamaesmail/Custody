@@ -75,6 +75,7 @@ button:disabled{opacity:.55;cursor:not-allowed}
 <main class="wrap">
   <div class="tabs">
     <button id="tabReview" class="active" onclick="showTab('reviewTab')">Receipt Review</button>
+    <button id="tabTransfer" onclick="showTab('transferTab')">Transfers</button>
   </div>
   <section id="reviewTab">
   <div class="summary">
@@ -99,6 +100,66 @@ button:disabled{opacity:.55;cursor:not-allowed}
   <button id="loadMoreBtn" class="secondary load-more hidden" onclick="renderMore()">Load more receipts</button>
   <div id="feedEmpty" class="card review-empty hidden">No expenses match these filters.</div>
   </section>
+
+  <section id="transferTab" class="hidden">
+    <div class="card">
+      <div class="review-head">
+        <div>
+          <h1>Transfers</h1>
+          <div class="muted">View transfer totals grouped by Engineer and drill down to the related expenses.</div>
+        </div>
+        <button class="secondary" onclick="loadTransferView()">Refresh</button>
+      </div>
+
+      <div class="row" style="margin-top:14px;align-items:end">
+        <div>
+          <label>Transfer Status</label>
+          <select id="transferStatusFilter" onchange="loadTransferView()">
+            <option value="Pending">Pending</option>
+            <option value="Needs Transfer" selected>Needs Transfer</option>
+            <option value="Transferred">Transferred</option>
+          </select>
+        </div>
+        <div>
+          <small class="muted">Total for selected status</small>
+          <div id="transferViewTotal" class="transfer-total">0.00 EGP</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <div class="review-head">
+        <h2>Engineer Summary</h2>
+        <span id="transferEngineerCount" class="muted"></span>
+      </div>
+      <div class="table-wrap" style="max-height:none;margin-top:10px">
+        <table class="table">
+          <thead><tr><th>Engineer</th><th>Expenses</th><th>Total Amount</th><th>Status</th><th>View</th></tr></thead>
+          <tbody id="transferEngineerTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="transferExpenseCard" class="card hidden" style="margin-top:14px">
+      <div class="review-head">
+        <h2 id="transferExpenseTitle">Engineer Expenses</h2>
+        <button class="secondary" onclick="$('transferExpenseCard').classList.add('hidden')">Close</button>
+      </div>
+      <div class="table-wrap" style="max-height:none;margin-top:10px">
+        <table class="table">
+          <thead><tr><th>Select</th><th>ID</th><th>Date</th><th>Amount</th><th>Category</th><th>Project</th><th>Description</th><th>PM</th><th>Finance</th><th>Status</th></tr></thead>
+          <tbody id="transferExpenseTable"></tbody>
+        </table>
+      </div>
+
+      <div id="transferActionArea" class="transfer-actions hidden" style="margin-top:14px">
+        <div><label>Transfer Reference</label><input id="transferViewReference" placeholder="Bank transfer / batch reference"></div>
+        <div><button class="primary" style="width:100%" onclick="markTransferViewSelected()">Mark Selected as Transferred</button></div>
+      </div>
+      <div id="transferViewMsg" class="msg"></div>
+    </div>
+  </section>
+
 </main>
 </div>
 
@@ -237,6 +298,84 @@ function updateSummaryAfterDecision(decision){
   if(decision==='Approved')$('sApproved').textContent=Number($('sApproved').textContent||0)+1;
   if(decision==='Rejected')$('sRejected').textContent=Number($('sRejected').textContent||0)+1;
   if(decision==='Needs Clarification')$('sClarify').textContent=Number($('sClarify').textContent||0)+1;
+}
+
+
+let transferViewRows=[];
+function showTab(tab){
+  $('reviewTab').classList.toggle('hidden',tab!=='reviewTab');
+  $('transferTab').classList.toggle('hidden',tab!=='transferTab');
+  $('tabReview').classList.toggle('active',tab==='reviewTab');
+  $('tabTransfer').classList.toggle('active',tab==='transferTab');
+  if(tab==='transferTab') loadTransferView();
+}
+async function loadTransferView(){
+  msg('transferViewMsg','');
+  $('transferExpenseCard').classList.add('hidden');
+  const status=$('transferStatusFilter').value;
+  try{
+    const r=await api('getTransferStatusRows',{token:pmToken,status});
+    if(r.expired)return expired();
+    if(!r.ok)throw new Error(r.error);
+    transferViewRows=r.rows||[];
+    $('transferViewTotal').textContent=Number(r.total||0).toFixed(2)+' EGP';
+    renderTransferEngineerSummary(status);
+  }catch(e){
+    $('transferEngineerTable').innerHTML='<tr><td colspan="5" class="err">'+esc(e.message)+'</td></tr>';
+  }
+}
+function renderTransferEngineerSummary(status){
+  const groups={};
+  transferViewRows.forEach(x=>{
+    if(!groups[x.engineer])groups[x.engineer]={count:0,total:0};
+    groups[x.engineer].count++;
+    groups[x.engineer].total+=Number(x.amount||0);
+  });
+  const names=Object.keys(groups).sort((a,b)=>a.localeCompare(b));
+  $('transferEngineerCount').textContent=names.length+' engineer(s)';
+  const body=$('transferEngineerTable');body.innerHTML='';
+  if(!names.length){
+    body.innerHTML='<tr><td colspan="5" class="muted">No expenses with status '+esc(status)+'.</td></tr>';
+    return;
+  }
+  names.forEach(name=>{
+    const g=groups[name],tr=document.createElement('tr');
+    tr.innerHTML='<td><b>'+esc(name)+'</b></td><td>'+g.count+'</td><td><b>'+g.total.toFixed(2)+' EGP</b></td><td><span class="status">'+esc(status)+'</span></td><td><button class="secondary">View Expenses</button></td>';
+    tr.querySelector('button').onclick=()=>showEngineerTransferExpenses(name);
+    body.appendChild(tr);
+  });
+}
+function showEngineerTransferExpenses(name){
+  const status=$('transferStatusFilter').value;
+  const rows=transferViewRows.filter(x=>x.engineer===name);
+  $('transferExpenseTitle').textContent=name+' — '+status+' Expenses';
+  const body=$('transferExpenseTable');body.innerHTML='';
+  rows.forEach(x=>{
+    const tr=document.createElement('tr');
+    const canSelect=status==='Needs Transfer';
+    tr.innerHTML='<td>'+(canSelect?'<input type="checkbox" data-id="'+esc(x.id)+'">':'—')+'</td>'+
+      '<td>'+esc(x.id)+'</td><td>'+esc(x.date)+'</td><td><b>'+Number(x.amount||0).toFixed(2)+'</b></td>'+
+      '<td>'+esc(x.category)+'</td><td>'+esc(x.project)+'</td><td>'+esc(x.description)+'</td>'+
+      '<td>'+esc(x.pmStatus)+'</td><td>'+esc(x.financeStatus)+'</td><td>'+esc(x.transferStatus)+'</td>';
+    body.appendChild(tr);
+  });
+  $('transferActionArea').classList.toggle('hidden',status!=='Needs Transfer');
+  $('transferExpenseCard').classList.remove('hidden');
+  $('transferExpenseCard').scrollIntoView({behavior:'smooth',block:'start'});
+}
+async function markTransferViewSelected(){
+  const ids=Array.from(document.querySelectorAll('#transferExpenseTable input[type=checkbox]:checked')).map(x=>x.dataset.id);
+  if(!ids.length)return msg('transferViewMsg','Select at least one expense.','err');
+  const reference=$('transferViewReference').value.trim();
+  if(!reference)return msg('transferViewMsg','Enter the transfer reference.','err');
+  if(!confirm('Mark '+ids.length+' expense(s) as transferred?'))return;
+  try{
+    const r=await api('pmMarkTransferred',{pmToken,ids,reference});
+    if(r.expired)return expired();if(!r.ok)throw new Error(r.error);
+    $('transferViewReference').value='';
+    msg('transferViewMsg',r.count+' expense(s) marked as transferred.','ok');
+    await loadTransferView();
+  }catch(e){msg('transferViewMsg',e.message,'err')}
 }
 
 $('pmPin').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
