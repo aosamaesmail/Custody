@@ -329,19 +329,38 @@ async function loadTransferView(){
   }
 }
 function renderTransferEngineerSummary(status){
+  const body=$('transferEngineerTable');body.innerHTML='';
+  if(status==='Transferred'){
+    const groups={};
+    transferViewRows.forEach(x=>{
+      const key=x.transferBatchId||('LEGACY-'+x.engineer+'-'+(x.transferDate||''));
+      if(!groups[key])groups[key]={batchId:x.transferBatchId||'Legacy Transfer',engineer:x.engineer,date:x.transferDate||'',count:0,total:0};
+      groups[key].count++;groups[key].total+=Number(x.amount||0);
+    });
+    const items=Object.values(groups).sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+    $('transferEngineerCount').textContent=items.length+' transfer batch(es)';
+    if(!items.length){body.innerHTML='<tr><td colspan="5" class="muted">No transferred batches.</td></tr>';return;}
+    items.forEach(g=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML='<td><b>'+esc(g.batchId)+'</b><div class="muted">'+esc(g.engineer)+'</div></td>'+
+        '<td>'+g.count+'</td><td><b>'+g.total.toFixed(2)+' EGP</b></td>'+
+        '<td><span class="status">Transferred</span><div class="muted">'+esc(g.date)+'</div></td>'+
+        '<td><div style="display:flex;gap:7px;flex-wrap:wrap"><button class="secondary view-batch-btn">View Expenses</button><button class="primary export-batch-btn">Export Excel</button></div></td>';
+      tr.querySelector('.view-batch-btn').onclick=()=>showTransferBatchExpenses(g.batchId,g.engineer);
+      tr.querySelector('.export-batch-btn').onclick=()=>exportTransferBatchExcel(g.batchId,g.engineer);
+      body.appendChild(tr);
+    });
+    return;
+  }
+
   const groups={};
   transferViewRows.forEach(x=>{
     if(!groups[x.engineer])groups[x.engineer]={count:0,total:0};
-    groups[x.engineer].count++;
-    groups[x.engineer].total+=Number(x.amount||0);
+    groups[x.engineer].count++;groups[x.engineer].total+=Number(x.amount||0);
   });
   const names=Object.keys(groups).sort((a,b)=>a.localeCompare(b));
   $('transferEngineerCount').textContent=names.length+' engineer(s)';
-  const body=$('transferEngineerTable');body.innerHTML='';
-  if(!names.length){
-    body.innerHTML='<tr><td colspan="5" class="muted">No expenses with status '+esc(status)+'.</td></tr>';
-    return;
-  }
+  if(!names.length){body.innerHTML='<tr><td colspan="5" class="muted">No expenses with status '+esc(status)+'.</td></tr>';return;}
   names.forEach(name=>{
     const g=groups[name],tr=document.createElement('tr');
     tr.innerHTML='<td><b>'+esc(name)+'</b></td><td>'+g.count+'</td><td><b>'+g.total.toFixed(2)+' EGP</b></td><td><span class="status">'+esc(status)+'</span></td>'+
@@ -379,6 +398,28 @@ function toggleAllTransferExpenses(){
   const btn=$('selectAllTransferBtn');
   if(btn)btn.textContent=shouldCheck?'Deselect All':'Select All';
 }
+function showTransferBatchExpenses(batchId,engineer){
+  const rows=transferViewRows.filter(x=>(x.transferBatchId||'Legacy Transfer')===batchId && x.engineer===engineer);
+  $('transferExpenseTitle').textContent=batchId+' — '+engineer;
+  const body=$('transferExpenseTable');body.innerHTML='';
+  rows.forEach(x=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML='<td>—</td><td>'+esc(x.id)+'</td><td>'+esc(x.date)+'</td><td><b>'+Number(x.amount||0).toFixed(2)+'</b></td>'+
+      '<td>'+esc(x.category)+'</td><td>'+esc(x.project)+'</td><td>'+esc(x.description)+'</td>'+
+      '<td>'+esc(x.pmStatus)+'</td><td>'+esc(x.financeStatus)+'</td><td>'+esc(x.transferStatus)+'</td>';
+    body.appendChild(tr);
+  });
+  $('transferActionArea').classList.add('hidden');
+  $('transferExpenseCard').classList.remove('hidden');
+  $('transferExpenseCard').scrollIntoView({behavior:'smooth',block:'start'});
+}
+async function exportTransferBatchExcel(batchId,engineer){
+  const original=transferViewRows;
+  const rows=original.filter(x=>(x.transferBatchId||'Legacy Transfer')===batchId && x.engineer===engineer);
+  if(!rows.length)return;
+  transferViewRows=rows;
+  try{await exportEngineerExcel(engineer);}finally{transferViewRows=original;}
+}
 async function markTransferViewSelected(){
   const ids=Array.from(document.querySelectorAll('#transferExpenseTable input[type=checkbox]:checked')).map(x=>x.dataset.id);
   if(!ids.length)return msg('transferViewMsg','Select at least one expense.','err');
@@ -386,7 +427,7 @@ async function markTransferViewSelected(){
   try{
     const r=await api('financeMarkTransferred',{financeToken,ids,reference:''});
     if(r.expired)return expired();if(!r.ok)throw new Error(r.error);
-    msg('transferViewMsg',r.count+' expense(s) marked as transferred.','ok');
+    msg('transferViewMsg',r.count+' expense(s) marked as transferred'+(r.batchId?' in '+r.batchId:'')+'.','ok');
     await loadTransferView();
   }catch(e){msg('transferViewMsg',e.message,'err')}
 }
