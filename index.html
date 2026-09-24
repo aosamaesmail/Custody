@@ -6,75 +6,150 @@
 <title>Custody Expenses</title>
 <style>
 *{box-sizing:border-box}
-:root{--blue:#1a73e8;--bg:#f3f4f6;--text:#111827;--muted:#6b7280;--border:#d1d5db}
-body{margin:0;font-family:Arial,Tahoma,sans-serif;background:var(--bg);color:var(--text)}
+:root{--blue:#1a73e8;--bg:#f3f4f6;--text:#111827;--muted:#6b7280;--border:#d1d5db;--radius:10px}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;font-family:Arial,Tahoma,sans-serif;font-size:16px;line-height:1.4;background:var(--bg);color:var(--text)}
 button,input,select,textarea{font:inherit}
 .hidden{display:none!important}
-.app{min-height:100vh;display:flex}
-.sidebar{width:230px;background:#111827;color:#fff;position:fixed;inset:0 auto 0 0;padding:18px 14px;z-index:20}
-.brand{font-size:20px;font-weight:700;padding:8px 10px 24px}
-.nav button{width:100%;text-align:left;background:transparent;color:#e5e7eb;border:0;padding:12px 10px;border-radius:9px;margin:3px 0;cursor:pointer}
+
+/* top bar + slide-in menu */
+.topbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:10px;height:56px;padding:0 12px;background:#111827;color:#fff}
+.menu-btn{width:44px;height:44px;border:0;border-radius:10px;background:transparent;color:#fff;font-size:24px;line-height:1;cursor:pointer}
+.menu-btn:hover{background:#1f2937}
+.brand{font-size:18px;font-weight:700;flex:1}
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:40}
+.drawer{position:fixed;top:0;bottom:0;left:0;width:270px;max-width:82vw;background:#111827;color:#fff;padding:14px;z-index:50;transform:translateX(-100%);visibility:hidden;transition:transform .2s ease,visibility .2s}
+.drawer.open{transform:translateX(0);visibility:visible}
+.drawer .brand{padding:10px 10px 18px;flex:none}
+.nav button{display:flex;align-items:center;gap:12px;width:100%;min-height:48px;text-align:left;background:transparent;color:#e5e7eb;border:0;padding:12px;border-radius:10px;margin:3px 0;cursor:pointer;font-size:16px}
 .nav button:hover{background:#1f2937}
 .nav .danger{color:#fecaca}
-.content{margin-left:230px;width:100%;padding:24px}
-.container{max-width:900px;margin:auto}
-.card{background:#fff;border-radius:12px;padding:18px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.10)}
-h1{font-size:24px;margin:0 0 18px} h2{font-size:18px;margin:0 0 12px}
-label{display:block;font-size:13px;color:#374151;margin:11px 0 5px}
-input,select,textarea{width:100%;padding:11px;font-size:16px;border:1px solid var(--border);border-radius:8px;background:#fff}
-button.primary{width:100%;padding:13px;font-size:16px;border:0;border-radius:8px;background:var(--blue);color:#fff;margin-top:15px;cursor:pointer}
-button.secondary{background:#e5e7eb;color:#111827;border:0;border-radius:8px;padding:9px 13px;cursor:pointer}
-button.small{padding:9px 12px;border:0;border-radius:8px;background:var(--blue);color:#fff;cursor:pointer}
+.nav button:before{width:24px;text-align:center;font-size:18px}
+.nav button[data-icon="home"]:before{content:"\1F3E0"}
+.nav button[data-icon="admin"]:before{content:"\1F510"}
+.nav button[data-icon="logout"]:before{content:"\21AA"}
+
+/* layout */
+.content{padding:16px 14px 32px}
+.container{max-width:760px;margin:0 auto}
+.card{background:#fff;border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.10)}
+h1{font-size:22px;line-height:1.25;margin:0 0 14px}
+h2{font-size:18px;line-height:1.3;margin:0 0 12px}
+label{display:block;font-size:14px;font-weight:600;color:#374151;margin:14px 0 6px}
+.card>label:first-child,.row>div>label:first-child{margin-top:0}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row>*{min-width:0}
+.row+label,.row+select{margin-top:14px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.top h1,.top h2{margin:0}
+
+/* form controls: same height and font everywhere */
+input,select,textarea{display:block;width:100%;min-width:0;min-height:48px;padding:12px 14px;font-size:16px;line-height:1.3;color:var(--text);background:#fff;border:1px solid var(--border);border-radius:var(--radius);-webkit-appearance:none;appearance:none}
+input:focus,select:focus,textarea:focus{outline:2px solid #93c5fd;border-color:var(--blue)}
+textarea{min-height:92px;resize:vertical}
+select,.combo input{padding-right:40px;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'><path d='M1 1l6 6 6-6' fill='none' stroke='%236b7280' stroke-width='2'/></svg>");background-repeat:no-repeat;background-position:right 14px center;background-size:14px 9px}
+input[type=date]{text-align:left}
+input[type=file]{padding:10px 12px;font-size:15px}
+input[type=checkbox]{width:22px;height:22px;min-height:0;padding:0;flex:none;-webkit-appearance:auto;appearance:auto}
+.check{display:flex;align-items:center;gap:10px;margin-top:16px;font-weight:600}
+
+button.primary{display:block;width:100%;min-height:50px;padding:12px;font-size:16px;font-weight:600;color:#fff;background:var(--blue);border:0;border-radius:var(--radius);margin-top:18px;cursor:pointer}
+button.secondary{min-height:44px;padding:10px 14px;font-size:15px;color:#111827;background:#e5e7eb;border:0;border-radius:var(--radius);cursor:pointer}
+button.small{min-height:44px;padding:10px 14px;font-size:15px;color:#fff;background:var(--blue);border:0;border-radius:var(--radius);cursor:pointer}
 button:disabled{opacity:.55;cursor:not-allowed}
-.row{display:flex;gap:12px}.row>div{flex:1}
-.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}
+
 .msg{margin-top:10px;font-size:14px}.err{color:#b91c1c}.ok{color:#047857}
-.bal{font-size:14px;margin-bottom:8px}.bar{height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden}.bar div{height:100%;background:#10b981}
-.item{border-top:1px solid #e5e7eb;padding:10px 0;font-size:14px}.item small{color:var(--muted);display:block}
-.tag{display:inline-block;font-size:12px;padding:2px 8px;border-radius:10px;background:#e5e7eb;margin:4px 4px 0 0}
-.login-wrap{max-width:440px;margin:8vh auto}.admin-badge{display:inline-block;padding:4px 8px;background:#fee2e2;color:#991b1b;border-radius:12px;font-size:12px}
+.bal{font-size:15px;margin-bottom:10px}
+.bar{height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden}.bar div{height:100%;background:#10b981}
+.item{border-top:1px solid #e5e7eb;padding:12px 0;font-size:15px}.item small{display:block;color:var(--muted);font-size:13px;margin-top:2px}
+.tag{display:inline-block;font-size:12px;padding:3px 9px;border-radius:10px;background:#e5e7eb;margin:6px 6px 0 0}
+.login-wrap{max-width:420px;margin:0 auto;padding:6vh 14px 24px}
+.admin-badge{display:inline-block;padding:4px 10px;background:#fee2e2;color:#991b1b;border-radius:12px;font-size:12px;font-weight:700;white-space:nowrap}
 .pin-box{font-size:30px;letter-spacing:7px;font-weight:700;text-align:center;background:#f9fafb}
-.search-note{font-size:12px;color:var(--muted);margin-top:4px}.sidebar .nav-title{font-size:11px;color:#9ca3af;text-transform:uppercase;padding:18px 10px 5px}.admin-tabs{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}.admin-tabs button{border:1px solid var(--border);background:#fff;border-radius:8px;padding:9px 12px;cursor:pointer}.admin-tabs button.active{background:#111827;color:#fff}.table-wrap{overflow:auto}.admin-table{width:100%;border-collapse:collapse;font-size:13px}.admin-table th,.admin-table td{padding:9px;border-bottom:1px solid #e5e7eb;text-align:left;white-space:nowrap}.status-active{color:#047857;font-weight:700}.status-inactive{color:#b91c1c;font-weight:700}.transfer-total{font-size:24px;font-weight:700}.check-cell{width:35px;text-align:center!important}
+.search-note{font-size:13px;color:var(--muted);margin-top:4px}
+
+/* searchable dropdown */
+.combo{position:relative}
+.combo-list{position:absolute;left:0;right:0;top:calc(100% + 4px);max-height:240px;overflow-y:auto;background:#fff;border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 8px 20px rgba(0,0,0,.15);z-index:25}
+.combo-item{padding:12px 14px;font-size:16px;border-bottom:1px solid #f3f4f6;cursor:pointer}
+.combo-item:last-child{border-bottom:0}
+.combo-item:hover{background:#eff6ff}
+.combo-empty{padding:12px 14px;font-size:14px;color:var(--muted)}
+
+/* admin */
+.admin-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.admin-tabs button{min-height:46px;font-size:15px;border:1px solid var(--border);background:#fff;border-radius:var(--radius);cursor:pointer}
+.admin-tabs button.active{background:#111827;color:#fff;border-color:#111827}
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.admin-table{width:100%;border-collapse:collapse;font-size:14px}
+.admin-table th,.admin-table td{padding:10px;border-bottom:1px solid #e5e7eb;text-align:left;white-space:nowrap}
+.admin-table td input[type=number]{width:110px;min-height:40px;padding:8px 10px}
+.check-cell{width:40px;text-align:center!important}
+.act{display:flex;flex-wrap:wrap;gap:8px}
+.status-active{color:#047857;font-weight:700}.status-inactive{color:#b91c1c;font-weight:700}
+.transfer-total{font-size:24px;font-weight:700}
+
 @media(max-width:700px){
- .sidebar{width:74px;padding:12px 8px}.brand{font-size:0;text-align:center;padding:8px 0 20px}.brand:after{content:"CE";font-size:20px}
- .nav button{font-size:0;text-align:center;padding:13px 5px}.nav button:before{font-size:18px}
- .nav button[data-icon="home"]:before{content:"🏠"}.nav button[data-icon="admin"]:before{content:"🔐"}.nav button[data-icon="logout"]:before{content:"↪"}
- .content{margin-left:74px;padding:14px}.row{flex-direction:column}.top h1{font-size:20px}
+  .stack-table thead{display:none}
+  .stack-table,.stack-table tbody,.stack-table tr,.stack-table td{display:block;width:100%}
+  .stack-table tr{border:1px solid #e5e7eb;border-radius:12px;padding:8px 12px;margin-bottom:12px}
+  .stack-table td{display:flex;justify-content:space-between;align-items:center;gap:12px;border:0;padding:7px 0;white-space:normal}
+  .stack-table td:before{content:attr(data-label);font-size:13px;font-weight:600;color:var(--muted)}
+  .stack-table td.actions{display:block}
+  .stack-table td.actions:before{display:none}
+  .stack-table td input[type=number]{width:120px}
+}
+@media(max-width:520px){
+  .row.stack-sm{grid-template-columns:1fr}
+}
+@media(max-width:380px){
+  .row{grid-template-columns:1fr}
+  .content{padding:12px 10px 28px}
+  .card{padding:14px}
 }
 </style>
+
 </head>
 <body>
 <div id="loginView" class="login-wrap">
   <div class="card">
     <h1>Custody Expenses</h1>
-    <div style="color:#6b7280;margin-bottom:15px">Engineer Login / دخول المهندس</div>
+    <div style="color:#6b7280;margin:-6px 0 6px">Engineer Login / دخول المهندس</div>
     <label>Engineer Name / اسم المهندس</label>
-    <input id="lname" list="engineerLoginList" autocomplete="off" placeholder="Select or type your name">
-    <datalist id="engineerLoginList"></datalist>
+    <div class="combo">
+      <input id="lname" name="custody-engineer" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Search and select your name">
+      <div id="lnameList" class="combo-list hidden"></div>
+    </div>
     <label>PIN / الرقم السري</label>
-    <input id="lpin" type="password" inputmode="numeric" maxlength="8" autocomplete="off">
+    <input id="lpin" name="custody-pin" type="password" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="6 digits">
     <button id="loginBtn" class="primary" onclick="doLogin()">Login / دخول</button>
     <div id="loginMsg" class="msg err"></div>
     <button class="secondary" style="width:100%;margin-top:14px" onclick="openAdminLogin()">Admin login / دخول الإدارة</button>
   </div>
 </div>
 
-<div id="appView" class="app hidden">
-  <aside class="sidebar">
+<div id="appView" class="hidden">
+  <header class="topbar">
+    <button class="menu-btn" onclick="toggleMenu()" aria-label="Menu">&#9776;</button>
+    <div class="brand">Custody Expenses</div>
+    <span class="admin-badge" id="roleBadge">ENGINEER</span>
+  </header>
+  <div id="scrim" class="scrim hidden" onclick="closeMenu()"></div>
+  <aside id="drawer" class="drawer">
     <div class="brand">Custody Expenses</div>
     <div class="nav">
       <button data-icon="home" onclick="goHome()">Home</button>
-      <button data-icon="admin" onclick="openAdminLogin()">Admin</button>
+      <button data-icon="admin" onclick="openAdmin()">Admin</button>
       <button data-icon="logout" class="danger" onclick="doEngineerLogout()">Log out</button>
     </div>
   </aside>
 
-  <main class="content">
+  
+<main class="content">
     <div class="container">
       <section id="homePage">
         <div class="top">
           <h1 id="hello"></h1>
-          <span class="admin-badge" id="roleBadge">ENGINEER</span>
         </div>
 
         <div class="card">
@@ -93,8 +168,8 @@ button:disabled{opacity:.55;cursor:not-allowed}
           <label>Description / البيان</label><textarea id="fdesc" rows="2" maxlength="300"></textarea>
           <label>Receipt photo / صورة الإيصال</label>
           <input id="fimg" type="file" accept="image/*" capture="environment">
-          <label style="display:flex;gap:8px;align-items:center;margin-top:12px">
-            <input id="fnoreceipt" type="checkbox" style="width:auto" onchange="toggleNoReceipt()"> No receipt available / لا يوجد إيصال
+          <label class="check">
+            <input id="fnoreceipt" type="checkbox" onchange="toggleNoReceipt()"> No receipt available / لا يوجد إيصال
           </label>
           <div id="noReceiptBox" class="hidden">
             <label>Reason / السبب</label><input id="fwhy" maxlength="200">
@@ -123,9 +198,9 @@ button:disabled{opacity:.55;cursor:not-allowed}
         <div id="engineersTab">
           <div class="card">
             <h2>Engineer Management</h2>
-            <div class="row">
+            <div class="row stack-sm">
               <div><label>Search Engineer</label><input id="engineerSearch" autocomplete="off" placeholder="Search name" oninput="renderEngineers()"></div>
-              <div><label>New Engineer Name</label><input id="newEngineerName" autocomplete="off" placeholder="Enter unique name"></div>
+              <div><label>New Engineer Name</label><div class="combo"><input id="newEngineerName" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Search and select name"><div id="newEngineerList" class="combo-list hidden"></div></div></div>
             </div>
             <button class="small" style="margin-top:12px;width:100%" onclick="addEngineer()">Add Engineer + Generate PIN</button>
             <div id="adminMsg" class="msg"></div>
@@ -135,7 +210,7 @@ button:disabled{opacity:.55;cursor:not-allowed}
             <h2>Registered Engineers</h2>
             <div class="search-note">Admin-only: activate/deactivate, regenerate PIN, change custody limit, and soft-delete an engineer.</div>
             <div class="table-wrap" style="margin-top:10px">
-              <table class="admin-table"><thead><tr><th>Engineer</th><th>Status</th><th>Custody Limit</th><th>PIN Generated</th><th>Actions</th></tr></thead><tbody id="engineerTable"></tbody></table>
+              <table class="admin-table stack-table"><thead><tr><th>Engineer</th><th>Status</th><th>Custody Limit</th><th>PIN Generated</th><th>Actions</th></tr></thead><tbody id="engineerTable"></tbody></table>
             </div>
           </div>
 
@@ -155,7 +230,7 @@ button:disabled{opacity:.55;cursor:not-allowed}
           <div class="card">
             <div class="top"><h2>Approved Expenses</h2><button class="secondary" onclick="downloadTransferTemplate()">Download Transfer Template</button></div>
             <div class="table-wrap"><table class="admin-table"><thead><tr><th class="check-cell"><input type="checkbox" id="selectAllTransfers" onchange="toggleAllTransfers()"></th><th>ID</th><th>Engineer</th><th>Date</th><th>Amount</th><th>Category</th><th>Description</th><th>Status</th></tr></thead><tbody id="transferTable"></tbody></table></div>
-            <div class="row" style="margin-top:12px;align-items:end"><div><label>Transfer Reference</label><input id="transferReference" placeholder="Bank transfer / batch reference"></div><div><button class="small" style="width:100%" onclick="markSelectedTransferred()">Mark Selected as Transferred</button></div></div>
+            <div class="row stack-sm" style="margin-top:12px;align-items:end"><div><label>Transfer Reference</label><input id="transferReference" placeholder="Bank transfer / batch reference"></div><div><button class="small" style="width:100%" onclick="markSelectedTransferred()">Mark Selected as Transferred</button></div></div>
             <div id="transferMsg" class="msg"></div>
           </div>
         </div>
@@ -193,24 +268,87 @@ async function api(action,data){
   const text=await res.text();
   try{return JSON.parse(text)}catch(e){throw new Error('Server returned HTTP '+res.status+' (not JSON). Check /api/backend on Vercel.')}
 }
+/* ---------- keep the login after a page refresh ---------- */
+function mkStore(kind){return{
+  get(k){try{return JSON.parse(window[kind].getItem(k)||'null')}catch(e){return null}},
+  set(k,v){try{window[kind].setItem(k,JSON.stringify(v))}catch(e){}},
+  del(k){try{window[kind].removeItem(k)}catch(e){}}
+}}
+const store=mkStore('localStorage'),sstore=mkStore('sessionStorage');
+let dropdownNames=[];
+function showApp(role){$('roleBadge').textContent=role;$('loginView').classList.add('hidden');$('appView').classList.remove('hidden')}
+function restoreSession(){
+  const s=store.get('custody.session'),a=sstore.get('custody.admin');
+  if(a&&a.token)adminToken=a.token;
+  if(s&&s.token){
+    engineerToken=s.token;$('hello').textContent='Hello, '+(s.name||'');
+    showApp('ENGINEER');showPage('home');refresh();
+  }else if(adminToken){
+    $('hello').textContent='Admin';showApp('ADMIN');showPage('admin');loadEngineers();showAdminTab('engineers');
+  }
+}
+
+/* ---------- slide-in menu ---------- */
+function openMenu(){$('drawer').classList.add('open');$('scrim').classList.remove('hidden')}
+function closeMenu(){$('drawer').classList.remove('open');$('scrim').classList.add('hidden')}
+function toggleMenu(){$('drawer').classList.contains('open')?closeMenu():openMenu()}
+
+/* ---------- searchable dropdown ---------- */
+function makeCombo(inputId,listId,getItems){
+  const input=$(inputId),list=$(listId);
+  const norm=s=>String(s||'').trim().toLowerCase();
+  function render(){
+    const all=getItems()||[];
+    list.innerHTML='';
+    if(!all.length){list.classList.add('hidden');return}
+    const q=norm(input.value);
+    const shown=all.filter(n=>!q||norm(n).includes(q)).slice(0,80);
+    if(!shown.length){const e=document.createElement('div');e.className='combo-empty';e.textContent='No match / لا توجد نتائج';list.appendChild(e)}
+    shown.forEach(n=>{
+      const d=document.createElement('div');d.className='combo-item';d.textContent=n;
+      d.addEventListener('mousedown',ev=>ev.preventDefault());
+      d.addEventListener('click',()=>choose(n));
+      list.appendChild(d);
+    });
+    list.classList.remove('hidden');
+  }
+  function choose(n){input.value=n;list.classList.add('hidden')}
+  input.addEventListener('focus',render);
+  input.addEventListener('input',render);
+  input.addEventListener('keydown',ev=>{
+    if(ev.key==='Enter'){const f=list.querySelector('.combo-item');if(f&&!list.classList.contains('hidden')){ev.preventDefault();choose(f.textContent)}}
+    if(ev.key==='Escape')list.classList.add('hidden');
+  });
+  input.addEventListener('blur',()=>setTimeout(()=>{
+    list.classList.add('hidden');
+    const all=getItems()||[];if(!all.length)return;
+    const m=all.find(n=>norm(n)===norm(input.value));
+    input.value=m||'';
+  },200));
+}
+
 async function init(){
+  { const n=new Date(); $('fdate').value=n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0'); }
+  restoreSession();
   try{
     cfg=await api('getConfig',{});
     if(cfg.ok){
       fill('fcat',cfg.categories,'Select...');
       fill('fproj',cfg.projects,cfg.projects.length===1?null:'Select...');
     }
-    const names=await api('getEngineerNames',{});
-    if(names.ok) fill('engineerLoginList',names.engineers);
+    const names=await api('getDropdownNames',{});
+    if(names.ok) dropdownNames=names.names||[];
   }catch(e){console.error(e)}
   const now=new Date(); $('fdate').value=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
 }
 async function doLogin(){
   $('loginBtn').disabled=true;setMsg('loginMsg','');
   try{
-    const r=await api('login',{name:$('lname').value,pin:$('lpin').value});
+    const nm=$('lname').value.trim();
+    if(dropdownNames.length&&!dropdownNames.some(n=>n.toLowerCase()===nm.toLowerCase())){setMsg('loginMsg','Select your name from the list / اختر اسمك من القائمة','err');return}
+    const r=await api('login',{name:nm,pin:$('lpin').value});
     if(!r.ok){setMsg('loginMsg',r.error,'err');return}
-    engineerToken=r.token;$('lpin').value='';
+    engineerToken=r.token;$('lpin').value='';store.set('custody.session',{token:r.token,name:r.name});
     $('hello').textContent='Hello, '+r.name;
     $('roleBadge').textContent='ENGINEER';
     $('loginView').classList.add('hidden');$('appView').classList.remove('hidden');
@@ -221,17 +359,19 @@ async function doLogin(){
 async function doEngineerLogout(){
   if(engineerToken)try{await api('logout',{token:engineerToken})}catch(e){}
   if(adminToken)try{await api('adminLogout',{token:adminToken})}catch(e){}
-  engineerToken=null;adminToken=null;
+  engineerToken=null;adminToken=null;store.del('custody.session');sstore.del('custody.admin');closeMenu();
   $('appView').classList.add('hidden');$('loginView').classList.remove('hidden');
   $('adminPage').classList.add('hidden');$('homePage').classList.remove('hidden');
   $('lname').value='';$('lpin').value='';
 }
 function expired(){
-  engineerToken=null;
+  engineerToken=null;store.del('custody.session');closeMenu();
   $('appView').classList.add('hidden');$('loginView').classList.remove('hidden');
   setMsg('loginMsg','Session expired. Please log in again.','err');
 }
 function showPage(page){
+  closeMenu();
+  $('roleBadge').textContent=page==='admin'?'ADMIN':'ENGINEER';
   $('homePage').classList.toggle('hidden',page!=='home');
   $('adminPage').classList.toggle('hidden',page!=='admin');
 }
@@ -304,7 +444,7 @@ async function doAdminLogin(){
   try{
     const r=await api('adminLogin',{pin:$('adminPin').value});
     if(!r.ok)return setMsg('adminLoginMsg',r.error,'err');
-    adminToken=r.token;closeAdminLogin();
+    adminToken=r.token;sstore.set('custody.admin',{token:r.token});closeAdminLogin();
     if(!engineerToken){$('hello').textContent='Admin';$('roleBadge').textContent='ADMIN';$('loginView').classList.add('hidden');$('appView').classList.remove('hidden')}
     showPage('admin');await loadEngineers();showAdminTab('engineers');
   }catch(e){setMsg('adminLoginMsg','Connection problem: '+(e.message||e),'err')}
@@ -319,17 +459,19 @@ function renderEngineers(){
   const body=$('engineerTable');body.innerHTML='';
   engineerRows.filter(e=>e.name.toLowerCase().includes(q)).forEach(e=>{
     const tr=document.createElement('tr');
-    const td=n=>{const x=document.createElement('td');x.innerHTML=n;return x};
-    tr.appendChild(td(e.name));
-    tr.appendChild(td(e.active?'<span class="status-active">Active</span>':'<span class="status-inactive">Inactive</span>'));
-    const lim=document.createElement('td'); const inp=document.createElement('input');inp.type='number';inp.min='0';inp.step='1';inp.value=e.limit||0;inp.style.width='120px';lim.appendChild(inp);tr.appendChild(lim);
-    tr.appendChild(td(e.pinGeneratedAt?new Date(e.pinGeneratedAt).toLocaleString():'Not generated'));
-    const act=document.createElement('td');
-    const b1=document.createElement('button');b1.className='small';b1.textContent='Regenerate PIN';b1.onclick=()=>regenPin(e.name);act.appendChild(b1);
-    const b2=document.createElement('button');b2.className='secondary';b2.style.marginLeft='6px';b2.textContent=e.active?'Deactivate':'Activate';b2.onclick=()=>setEngineer(e.name,!e.active,inp.value);act.appendChild(b2);
-    const b3=document.createElement('button');b3.className='secondary';b3.style.marginLeft='6px';b3.textContent='Save Limit';b3.onclick=()=>setEngineer(e.name,e.active,inp.value);act.appendChild(b3);
-    const b4=document.createElement('button');b4.className='secondary';b4.style.marginLeft='6px';b4.textContent='Disable';b4.onclick=()=>disableEngineer(e.name);act.appendChild(b4);
-    tr.appendChild(act);body.appendChild(tr);
+    const cell=(label,content)=>{const td=document.createElement('td');td.dataset.label=label;if(typeof content==='string')td.textContent=content;else td.appendChild(content);tr.appendChild(td);return td};
+    cell('Engineer',e.name);
+    const st=document.createElement('span');st.className=e.active?'status-active':'status-inactive';st.textContent=e.active?'Active':'Inactive';cell('Status',st);
+    const inp=document.createElement('input');inp.type='number';inp.min='0';inp.step='1';inp.value=e.limit||0;cell('Custody Limit',inp);
+    cell('PIN Generated',e.pinGeneratedAt?new Date(e.pinGeneratedAt).toLocaleString():'Not generated');
+    const box=document.createElement('div');box.className='act';
+    const act=cell('',box);act.className='actions';
+    const mk=(cls,text,fn)=>{const b=document.createElement('button');b.className=cls;b.textContent=text;b.onclick=fn;box.appendChild(b)};
+    mk('small','Regenerate PIN',()=>regenPin(e.name));
+    mk('secondary',e.active?'Deactivate':'Activate',()=>setEngineer(e.name,!e.active,inp.value));
+    mk('secondary','Save Limit',()=>setEngineer(e.name,e.active,inp.value));
+    mk('secondary','Disable',()=>disableEngineer(e.name));
+    body.appendChild(tr);
   });
 }
 async function addEngineer(){
@@ -371,12 +513,15 @@ async function downloadTransferTemplate(){
 }
 async function adminLogout(){
   if(adminToken)try{await api('adminLogout',{token:adminToken})}catch(e){}
-  adminToken=null;setMsg('adminMsg','');
+  adminToken=null;sstore.del('custody.admin');setMsg('adminMsg','');
   if(engineerToken){showPage('home')}
   else{$('appView').classList.add('hidden');$('loginView').classList.remove('hidden');$('adminPage').classList.add('hidden');$('homePage').classList.remove('hidden')}
 }
 function goHome(){ if(!engineerToken){adminLogout();return} showPage('home') }
+function openAdmin(){ closeMenu(); if(adminToken){showPage('admin');loadEngineers();showAdminTab('engineers')}else openAdminLogin() }
 $('adminPin').addEventListener('keydown',e=>{if(e.key==='Enter')doAdminLogin()});
+makeCombo('lname','lnameList',()=>dropdownNames);
+makeCombo('newEngineerName','newEngineerList',()=>dropdownNames.filter(n=>!engineerRows.some(e=>e.name.toLowerCase()===n.toLowerCase())));
 init();
 </script>
 </body>
