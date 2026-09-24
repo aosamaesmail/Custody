@@ -384,7 +384,7 @@ async function markTransferViewSelected(){
   if(!ids.length)return msg('transferViewMsg','Select at least one expense.','err');
   if(!confirm('Mark '+ids.length+' expense(s) as transferred?'))return;
   try{
-    const r=await api('financeMarkTransferred',{financeToken,ids,reference});
+    const r=await api('financeMarkTransferred',{financeToken,ids,reference:''});
     if(r.expired)return expired();if(!r.ok)throw new Error(r.error);
     msg('transferViewMsg',r.count+' expense(s) marked as transferred.','ok');
     await loadTransferView();
