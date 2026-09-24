@@ -253,7 +253,10 @@ button:disabled{opacity:.55;cursor:not-allowed}
 </div>
 
 <script>
-const API = '/api/backend';
+// Apps Script web app URL (Deploy > Manage deployments). Keep the same URL by always using "Edit > New version".
+// Leave empty ('') to go back to the Vercel proxy at /api/backend.
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxE2_an7yy_3pfaG_rShM_gBc0QTLeTN7pvn6bJ-BWPFei2Wst4N9XKiVg0dQZNHZhA/exec';
+const API = GAS_URL || '/api/backend';
 let engineerToken = null;
 let adminToken = null;
 let cfg = null;
@@ -266,9 +269,10 @@ function fill(id,list,placeholder){
   (list||[]).forEach(x=>{const o=document.createElement('option');o.value=x;o.textContent=x;s.appendChild(o)})
 }
 async function api(action,data){
-  const res=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,data:data||{}})});
+  // text/plain keeps this a "simple" request, so the browser does not need a CORS preflight that Apps Script cannot answer
+  const res=await fetch(API,{method:'POST',headers:{'Content-Type':GAS_URL?'text/plain;charset=utf-8':'application/json'},body:JSON.stringify({action,data:data||{}}),redirect:'follow'});
   const text=await res.text();
-  try{return JSON.parse(text)}catch(e){throw new Error('Server returned HTTP '+res.status+' (not JSON). Check /api/backend on Vercel.')}
+  try{return JSON.parse(text)}catch(e){throw new Error(GAS_URL?'Unexpected reply from Apps Script (HTTP '+res.status+'). Check the deployment: Execute as Me, access Anyone.':'Server returned HTTP '+res.status+' (not JSON). Check /api/backend on Vercel.')}
 }
 /* ---------- keep the login after a page refresh ---------- */
 function mkStore(kind){return{
