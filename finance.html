@@ -30,7 +30,19 @@ button:disabled{opacity:.55;cursor:not-allowed}
 .layout{display:grid;grid-template-columns:minmax(500px,1.1fr) minmax(440px,.9fr);gap:14px;margin-top:14px}
 .table-wrap{overflow:auto;max-height:72vh}.table{width:100%;border-collapse:collapse;font-size:13px}.table th{position:sticky;top:0;background:#f9fafb;z-index:2;text-align:left;color:#4b5563}.table th,.table td{padding:10px;border-bottom:1px solid #e5e7eb;white-space:nowrap}.table tr.data-row{cursor:pointer}.table tr.data-row:hover,.table tr.selected{background:#eff6ff}
 .status{display:inline-block;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:700}.s-pending{background:#f3f4f6}.s-approved{background:#d1fae5;color:#065f46}.s-rejected{background:#fee2e2;color:#991b1b}.s-clarification{background:#fef3c7;color:#92400e}
-.review-empty{min-height:450px;display:flex;align-items:center;justify-content:center;text-align:center;color:var(--muted)}
+.review-empty{min-height:180px;display:flex;align-items:center;justify-content:center;text-align:center;color:var(--muted)}
+.feed{max-width:860px;margin:14px auto 0;display:flex;flex-direction:column;gap:16px}
+.feed-card{background:#fff;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,.11);padding:16px}
+.feed-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;border-bottom:1px solid #e5e7eb;padding-bottom:12px;margin-bottom:12px}
+.feed-head h2{margin:0 0 4px;font-size:18px}.feed-id{font-size:12px;color:var(--muted)}
+.feed-meta{display:grid;grid-template-columns:repeat(3,1fr);gap:8px 14px;margin-bottom:10px}
+.feed-meta .detail{padding:6px 0}.feed-desc{padding:10px 0;border-top:1px solid #f3f4f6}
+.feed-receipt{background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;min-height:240px;display:flex;align-items:center;justify-content:center;overflow:hidden;margin:10px 0}
+.feed-receipt img{display:block;max-width:100%;max-height:650px;object-fit:contain;cursor:zoom-in}
+.feed-actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px}
+.feed-comment{margin-top:10px}
+.feed-status{font-size:13px;margin-top:8px}
+.load-more{display:block;margin:4px auto 18px;min-width:220px}
 .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;margin-bottom:12px}.detail{padding:7px 0;border-bottom:1px solid #f3f4f6}.detail small{display:block;color:var(--muted);margin-bottom:2px}.detail b{word-break:break-word}
 .receipt-box{background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;min-height:260px;display:flex;align-items:center;justify-content:center;overflow:hidden;margin:10px 0}.receipt-box img{display:block;max-width:100%;max-height:520px;object-fit:contain;cursor:zoom-in}.receipt-placeholder{text-align:center;color:var(--muted);padding:30px}
 .actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px}.top-actions{display:flex;gap:8px;align-items:center}.top-actions button{min-height:38px}
@@ -38,7 +50,7 @@ button:disabled{opacity:.55;cursor:not-allowed}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.transfer-total{font-size:28px;font-weight:800}.transfer-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:end}.transfer-actions>div{flex:1;min-width:220px}
 .review-head{display:flex;justify-content:space-between;gap:10px;align-items:center}.review-head h2{margin:0}
 @media(max-width:1000px){.layout{grid-template-columns:1fr}.table-wrap{max-height:480px}.summary{grid-template-columns:1fr 1fr}.filters{grid-template-columns:1fr 1fr 1fr}.filters .refresh{grid-column:span 3}}
-@media(max-width:600px){.wrap{padding:10px}.summary{grid-template-columns:1fr 1fr}.filters{grid-template-columns:1fr 1fr}.filters .refresh{grid-column:span 2}.detail-grid,.row,.checks{grid-template-columns:1fr}.actions{grid-template-columns:1fr}.topbar{padding:0 10px}.top-actions .reviewer{display:none}}
+@media(max-width:600px){.feed-meta{grid-template-columns:1fr 1fr}.feed-actions{grid-template-columns:1fr}.wrap{padding:10px}.summary{grid-template-columns:1fr 1fr}.filters{grid-template-columns:1fr 1fr}.filters .refresh{grid-column:span 2}.detail-grid,.row,.checks{grid-template-columns:1fr}.actions{grid-template-columns:1fr}.topbar{padding:0 10px}.top-actions .reviewer{display:none}}
 </style>
 </head>
 <body>
@@ -84,42 +96,9 @@ button:disabled{opacity:.55;cursor:not-allowed}
     </div>
   </div>
 
-  <div class="layout">
-    <div class="card">
-      <div class="review-head"><h2>Receipt Queue</h2><span class="muted" id="queueCount"></span></div>
-      <div class="table-wrap">
-        <table class="table"><thead><tr><th>ID</th><th>Engineer</th><th>Date</th><th>Amount</th><th>Category</th><th>PM</th><th>Finance</th><th>Receipt</th></tr></thead><tbody id="queue"></tbody></table>
-      </div>
-    </div>
-
-    <div class="card">
-      <div id="emptyReview" class="review-empty">Select an expense from the queue to review its receipt.</div>
-      <div id="review" class="hidden">
-        <div class="review-head"><h2 id="rTitle">Receipt Review</h2><button class="secondary" onclick="openOriginal()">Open Original</button></div>
-        <div class="detail-grid">
-          <div class="detail"><small>Engineer</small><b id="rEngineer"></b></div>
-          <div class="detail"><small>Expense Date</small><b id="rDate"></b></div>
-          <div class="detail"><small>Submitted Amount</small><b id="rAmount"></b></div>
-          <div class="detail"><small>Category</small><b id="rCategory"></b></div>
-          <div class="detail"><small>Project</small><b id="rProject"></b></div>
-          <div class="detail"><small>PM Status</small><b id="rPM"></b></div>
-          <div class="detail" style="grid-column:1/-1"><small>Description</small><b id="rDesc"></b></div>
-          <div id="rFlagBox" class="detail hidden" style="grid-column:1/-1"><small>Flag</small><b id="rFlag" style="color:#b45309"></b></div>
-        </div>
-
-        <div class="receipt-box" id="receiptBox"><div class="receipt-placeholder">Loading receipt...</div></div>
-
-        <label>Finance Comment</label><textarea id="rComment" maxlength="500" placeholder="Required for Reject or Needs Clarification"></textarea>
-
-        <div class="actions">
-          <button id="approveBtn" class="approve" onclick="reviewDecision('Approved')">Approve & Next</button>
-          <button id="clarifyBtn" class="clarify" onclick="reviewDecision('Needs Clarification')">Need Clarification</button>
-          <button id="rejectBtn" class="reject" onclick="reviewDecision('Rejected')">Reject</button>
-        </div>
-        <div id="reviewMsg" class="msg"></div>
-      </div>
-    </div>
-  </div>
+  <div id="feed" class="feed"></div>
+  <button id="loadMoreBtn" class="secondary load-more hidden" onclick="renderMore()">Load more receipts</button>
+  <div id="feedEmpty" class="card review-empty hidden">No expenses match these filters.</div>
   </section>
 
   <section id="transferTab" class="hidden">
@@ -151,7 +130,8 @@ button:disabled{opacity:.55;cursor:not-allowed}
 <script>
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbxE2_an7yy_3pfaG_rShM_gBc0QTLeTN7pvn6bJ-BWPFei2Wst4N9XKiVg0dQZNHZhA/exec';
 const API = GAS_URL;
-let financeToken=null, reviewerName='', allRows=[], shownRows=[], selected=null, readyRows=[];
+let financeToken=null, reviewerName='', allRows=[], shownRows=[], selected=null, readyRows=[], renderedCount=0;
+const FEED_BATCH=15;
 
 function $(id){return document.getElementById(id)}
 function msg(id,t,c){const e=$(id);e.textContent=t||'';e.className='msg '+(c||'')}
@@ -194,7 +174,7 @@ async function loadQueue(){
     const s=r.summary||{};
     $('sPending').textContent=s.pending||0;$('sApproved').textContent=s.approved||0;$('sRejected').textContent=s.rejected||0;$('sClarify').textContent=s.clarification||0;
     refillFilters();applyLocalFilters();
-  }catch(e){$('queue').innerHTML='<tr><td colspan="8" class="err">'+esc(e.message)+'</td></tr>'}
+  }catch(e){$('feed').innerHTML='<div class="card err">'+esc(e.message)+'</div>'}
 }
 function refillFilters(){
   const oldE=$('fEngineer').value,oldP=$('fProject').value;
@@ -207,74 +187,84 @@ function refillFilters(){
 function applyLocalFilters(){
   const e=$('fEngineer').value,p=$('fProject').value;
   shownRows=allRows.filter(x=>(!e||x.engineer===e)&&(!p||x.project===p));
-  renderQueue();
+  renderedCount=0;$('feed').innerHTML='';
+  $('feedEmpty').classList.toggle('hidden',shownRows.length!==0);
+  renderMore();
 }
-function renderQueue(){
-  const q=$('queue');q.innerHTML='';$('queueCount').textContent=shownRows.length+' expense(s)';
-  if(!shownRows.length){q.innerHTML='<tr><td colspan="8" class="muted">No expenses match these filters.</td></tr>';return}
-  shownRows.forEach(x=>{
-    const tr=document.createElement('tr');tr.className='data-row'+(selected&&selected.id===x.id?' selected':'');tr.onclick=()=>selectExpense(x.id);
-    tr.innerHTML='<td>'+esc(x.id)+'</td><td>'+esc(x.engineer)+'</td><td>'+esc(x.date)+'</td><td><b>'+Number(x.amount||0).toFixed(2)+'</b></td><td>'+esc(x.category)+'</td><td>'+esc(x.pmStatus)+'</td><td><span class="status '+statusClass(x.financeStatus)+'">'+esc(x.financeStatus)+'</span></td><td>'+(x.hasReceipt?'📎':'—')+'</td>';
-    q.appendChild(tr);
-  });
+function renderMore(){
+  const feed=$('feed');
+  const next=shownRows.slice(renderedCount,renderedCount+FEED_BATCH);
+  next.forEach(x=>feed.appendChild(buildFeedCard(x)));
+  renderedCount+=next.length;
+  $('loadMoreBtn').classList.toggle('hidden',renderedCount>=shownRows.length);
 }
-async function selectExpense(id){
-  msg('reviewMsg','');$('emptyReview').classList.add('hidden');$('review').classList.remove('hidden');
-  $('receiptBox').innerHTML='<div class="receipt-placeholder">Loading receipt...</div>';
-  try{
-    const r=await api('getFinanceExpense',{financeToken,id});
-    if(r.expired)return expired();if(!r.ok)throw new Error(r.error);
-    selected=r.expense;renderSelected();renderQueue();
-    if(selected.hasReceipt)loadReceipt(id);else $('receiptBox').innerHTML='<div class="receipt-placeholder">No receipt attached to this expense.</div>';
-  }catch(e){msg('reviewMsg',e.message,'err')}
+function buildFeedCard(x){
+  const card=document.createElement('article');card.className='feed-card';card.dataset.id=x.id;
+  const receiptId='receipt-'+safeId(x.id),commentId='comment-'+safeId(x.id),msgId='msg-'+safeId(x.id);
+  card.innerHTML=
+    '<div class="feed-head"><div><h2>'+esc(x.engineer)+'</h2><div class="feed-id">Expense '+esc(x.id)+'</div></div>'+
+    '<span class="status '+statusClass(x.financeStatus)+'">'+esc(x.financeStatus)+'</span></div>'+
+    '<div class="feed-meta">'+
+      meta('Expense Date',x.date)+meta('Amount',Number(x.amount||0).toFixed(2)+' EGP')+meta('Category',x.category)+
+      meta('Project',x.project)+meta('PM Status',x.pmStatus)+meta('Submitted',x.submitted||'')+
+    '</div>'+
+    '<div class="feed-desc"><small class="muted">Description</small><div><b>'+esc(x.description)+'</b></div></div>'+
+    (x.flag?'<div class="feed-desc"><small class="muted">Flag</small><div style="color:#b45309"><b>'+esc(x.flag)+'</b></div></div>':'')+
+    '<div id="'+receiptId+'" class="feed-receipt"><div class="receipt-placeholder">'+(x.hasReceipt?'Loading receipt...':'No receipt attached to this expense.')+'</div></div>'+
+    (x.hasReceipt?'<button class="secondary" onclick="openOriginalFor(\''+jsq(x.id)+'\')">Open Original Receipt</button>':'')+
+    '<div class="feed-comment"><label>Finance Comment</label><textarea id="'+commentId+'" maxlength="500" placeholder="Required for Reject or Needs Clarification">'+esc(x.financeComment||'')+'</textarea></div>'+
+    '<div class="feed-actions">'+
+      '<button class="approve" onclick="feedDecision(\''+jsq(x.id)+'\',\'Approved\')">Approve</button>'+
+      '<button class="clarify" onclick="feedDecision(\''+jsq(x.id)+'\',\'Needs Clarification\')">Need Clarification</button>'+
+      '<button class="reject" onclick="feedDecision(\''+jsq(x.id)+'\',\'Rejected\')">Reject</button>'+
+    '</div><div id="'+msgId+'" class="feed-status"></div>';
+  if(x.hasReceipt)loadFeedReceipt(x.id,receiptId);
+  return card;
 }
-function renderSelected(){
-  const x=selected;$('rTitle').textContent='Receipt Review • '+x.id;$('rEngineer').textContent=x.engineer;$('rDate').textContent=x.date;
-  $('rAmount').textContent=Number(x.amount||0).toFixed(2)+' EGP';$('rCategory').textContent=x.category;$('rProject').textContent=x.project;$('rPM').textContent=x.pmStatus;$('rDesc').textContent=x.description;
-  $('rFlagBox').classList.toggle('hidden',!x.flag);$('rFlag').textContent=x.flag||'';
-  $('rComment').value=x.financeComment||'';
-}
-function toInputDate(s){const m=String(s||'').match(/^(\d{2})\/(\d{2})\/(\d{4})$/);return m?m[3]+'-'+m[2]+'-'+m[1]:''}
-async function loadReceipt(id){
+function meta(label,value){return '<div class="detail"><small>'+esc(label)+'</small><b>'+esc(value||'')+'</b></div>'}
+function safeId(s){return String(s).replace(/[^a-zA-Z0-9_-]/g,'_')}
+function jsq(s){return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'")}
+async function loadFeedReceipt(id,boxId){
   try{
     const r=await api('getReceiptImage',{financeToken,id});
     if(r.expired)return expired();
-    if(!r.ok){$('receiptBox').innerHTML='<div class="receipt-placeholder">'+esc(r.error)+'</div>';return}
-    const img=document.createElement('img');img.src=r.dataUrl;img.alt='Receipt';img.onclick=()=>window.open(r.dataUrl,'_blank');$('receiptBox').innerHTML='';$('receiptBox').appendChild(img);
-  }catch(e){$('receiptBox').innerHTML='<div class="receipt-placeholder">'+esc(e.message)+'</div>'}
+    const box=$(boxId);if(!box)return;
+    if(!r.ok){box.innerHTML='<div class="receipt-placeholder">'+esc(r.error)+'</div>';return}
+    const img=document.createElement('img');img.src=r.dataUrl;img.alt='Receipt '+id;img.loading='lazy';
+    img.onclick=()=>window.open(r.dataUrl,'_blank');box.innerHTML='';box.appendChild(img);
+  }catch(e){const box=$(boxId);if(box)box.innerHTML='<div class="receipt-placeholder">'+esc(e.message)+'</div>'}
 }
-function openOriginal(){if(selected&&selected.receiptUrl)window.open(selected.receiptUrl,'_blank');else msg('reviewMsg','No original receipt is attached.','err')}
-
-async function reviewDecision(decision){
-  if(!selected)return;
-  const comment=$('rComment').value.trim();
-  if((decision==='Rejected'||decision==='Needs Clarification')&&!comment)return msg('reviewMsg','Enter a Finance comment explaining the issue.','err');
-  setActionDisabled(true);msg('reviewMsg','Saving review...');
-  const currentId=selected.id;
+function openOriginalFor(id){
+  const x=allRows.find(r=>r.id===id);if(x&&x.receiptUrl)window.open(x.receiptUrl,'_blank');
+}
+async function feedDecision(id,decision){
+  const x=allRows.find(r=>r.id===id);if(!x)return;
+  const comment=$('comment-'+safeId(id)).value.trim(),status=$('msg-'+safeId(id));
+  if((decision==='Rejected'||decision==='Needs Clarification')&&!comment){status.textContent='Enter a Finance comment explaining the issue.';status.className='feed-status err';return}
+  const card=document.querySelector('.feed-card[data-id="'+CSS.escape(id)+'"]');
+  const buttons=card?card.querySelectorAll('button'):[];
+  buttons.forEach(b=>b.disabled=true);status.textContent='Saving review...';status.className='feed-status';
   try{
-    const r=await api('reviewExpense',{financeToken,id:currentId,decision,comment});
-    if(r.expired)return expired();if(!r.ok)return msg('reviewMsg',r.error,'err');
-    msg('reviewMsg','Review saved.','ok');
-    const oldIndex=shownRows.findIndex(x=>x.id===currentId);
-    await loadQueue();
-    if(decision==='Approved'&&$('fStatus').value==='Pending'&&shownRows.length){
-      const next=shownRows[Math.min(Math.max(oldIndex,0),shownRows.length-1)];if(next)await selectExpense(next.id);
+    const r=await api('reviewExpense',{financeToken,id,decision,comment});
+    if(r.expired)return expired();if(!r.ok)throw new Error(r.error);
+    // Remove immediately from the current Pending feed after any completed review.
+    if($('fStatus').value==='Pending'){
+      allRows=allRows.filter(v=>v.id!==id);shownRows=shownRows.filter(v=>v.id!==id);
+      if(card){card.style.transition='opacity .18s ease,transform .18s ease';card.style.opacity='0';card.style.transform='translateY(-8px)';setTimeout(()=>card.remove(),190)}
+      updateSummaryAfterDecision(decision);
+      $('feedEmpty').classList.toggle('hidden',shownRows.length!==0);
     }else{
-      selected=null;$('review').classList.add('hidden');$('emptyReview').classList.remove('hidden');renderQueue();
+      status.textContent='Review saved.';status.className='feed-status ok';await loadQueue();
     }
-  }catch(e){msg('reviewMsg','Connection problem: '+e.message,'err')}
-  finally{setActionDisabled(false)}
+  }catch(e){status.textContent=e.message;status.className='feed-status err';buttons.forEach(b=>b.disabled=false)}
 }
-function setActionDisabled(v){['approveBtn','clarifyBtn','rejectBtn'].forEach(id=>$(id).disabled=v)}
-
-
-function showTab(tab){
-  $('reviewTab').classList.toggle('hidden',tab!=='reviewTab');
-  $('transferTab').classList.toggle('hidden',tab!=='transferTab');
-  $('tabReview').classList.toggle('active',tab==='reviewTab');
-  $('tabTransfer').classList.toggle('active',tab==='transferTab');
-  if(tab==='transferTab')loadReadyTransfers();
+function updateSummaryAfterDecision(decision){
+  const p=Math.max(0,Number($('sPending').textContent||0)-1);$('sPending').textContent=p;
+  if(decision==='Approved')$('sApproved').textContent=Number($('sApproved').textContent||0)+1;
+  if(decision==='Rejected')$('sRejected').textContent=Number($('sRejected').textContent||0)+1;
+  if(decision==='Needs Clarification')$('sClarify').textContent=Number($('sClarify').textContent||0)+1;
 }
+
 async function loadReadyTransfers(){
   msg('readyMsg','Loading...');
   try{
