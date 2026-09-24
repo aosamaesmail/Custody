@@ -158,7 +158,6 @@ button:disabled{opacity:.55;cursor:not-allowed}
           <label>Expense Selection</label>
           <button id="selectAllTransferBtn" class="secondary" style="width:100%" onclick="toggleAllTransferExpenses()">Select All</button>
         </div>
-        <div><label>Transfer Reference</label><input id="transferViewReference" placeholder="Bank transfer / batch reference"></div>
         <div><button class="primary" style="width:100%" onclick="markTransferViewSelected()">Mark Selected as Transferred</button></div>
       </div>
       <div id="transferViewMsg" class="msg"></div>
@@ -383,13 +382,10 @@ function toggleAllTransferExpenses(){
 async function markTransferViewSelected(){
   const ids=Array.from(document.querySelectorAll('#transferExpenseTable input[type=checkbox]:checked')).map(x=>x.dataset.id);
   if(!ids.length)return msg('transferViewMsg','Select at least one expense.','err');
-  const reference=$('transferViewReference').value.trim();
-  if(!reference)return msg('transferViewMsg','Enter the transfer reference.','err');
   if(!confirm('Mark '+ids.length+' expense(s) as transferred?'))return;
   try{
     const r=await api('financeMarkTransferred',{financeToken,ids,reference});
     if(r.expired)return expired();if(!r.ok)throw new Error(r.error);
-    $('transferViewReference').value='';
     msg('transferViewMsg',r.count+' expense(s) marked as transferred.','ok');
     await loadTransferView();
   }catch(e){msg('transferViewMsg',e.message,'err')}
