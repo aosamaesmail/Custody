@@ -138,9 +138,10 @@ button:disabled{opacity:.55;cursor:not-allowed}
   <aside id="drawer" class="drawer">
     <div class="brand">Custody Expenses</div>
     <div class="nav">
-      <button data-icon="home" onclick="goHome()">Home</button>
+      <button id="navHome" data-icon="home" onclick="goHome()">Home</button>
       <button data-icon="admin" onclick="openAdmin()">Admin</button>
-      <button data-icon="logout" class="danger" onclick="doEngineerLogout()">Log out</button>
+      <button id="navEngLogout" data-icon="logout" class="danger" onclick="doEngineerLogout()">Engineer log out</button>
+      <button id="navAdmLogout" data-icon="logout" class="danger" onclick="adminLogout()">Admin log out</button>
     </div>
   </aside>
 
@@ -150,6 +151,7 @@ button:disabled{opacity:.55;cursor:not-allowed}
       <section id="homePage">
         <div class="top">
           <h1 id="hello"></h1>
+          <button class="secondary" onclick="doEngineerLogout()">Log out</button>
         </div>
 
         <div class="card">
@@ -279,17 +281,25 @@ let dropdownNames=[];
 function showApp(role){$('roleBadge').textContent=role;$('loginView').classList.add('hidden');$('appView').classList.remove('hidden')}
 function restoreSession(){
   const s=store.get('custody.session'),a=sstore.get('custody.admin');
+  const page=sstore.get('custody.page'),tab=sstore.get('custody.adminTab')||'engineers';
   if(a&&a.token)adminToken=a.token;
   if(s&&s.token){
     engineerToken=s.token;$('hello').textContent='Hello, '+(s.name||'');
-    showApp('ENGINEER');showPage('home');refresh();
+    showApp('ENGINEER');
+    if(page==='admin'&&adminToken){showPage('admin');loadEngineers();showAdminTab(tab)}
+    else{showPage('home');refresh()}
   }else if(adminToken){
-    $('hello').textContent='Admin';showApp('ADMIN');showPage('admin');loadEngineers();showAdminTab('engineers');
+    $('hello').textContent='Admin';showApp('ADMIN');showPage('admin');loadEngineers();showAdminTab(tab);
   }
 }
 
 /* ---------- slide-in menu ---------- */
-function openMenu(){$('drawer').classList.add('open');$('scrim').classList.remove('hidden')}
+function updateMenu(){
+  $('navHome').classList.toggle('hidden',!engineerToken);
+  $('navEngLogout').classList.toggle('hidden',!engineerToken);
+  $('navAdmLogout').classList.toggle('hidden',!adminToken);
+}
+function openMenu(){updateMenu();$('drawer').classList.add('open');$('scrim').classList.remove('hidden')}
 function closeMenu(){$('drawer').classList.remove('open');$('scrim').classList.add('hidden')}
 function toggleMenu(){$('drawer').classList.contains('open')?closeMenu():openMenu()}
 
@@ -327,22 +337,25 @@ function makeCombo(inputId,listId,getItems){
   },200));
 }
 
+let cfgKey='';
+function applyConfig(c){
+  const k=JSON.stringify([c.categories,c.projects]);if(k===cfgKey)return;cfgKey=k;cfg=c;
+  fill('fcat',c.categories,'Select...');
+  fill('fproj',c.projects,c.projects.length===1?null:'Select...');
+}
 async function init(){
   { const n=new Date(); $('fdate').value=n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0'); }
+  const c0=store.get('custody.cfg');if(c0&&c0.categories)applyConfig(c0);
+  const n0=store.get('custody.names');if(Array.isArray(n0))dropdownNames=n0;
   restoreSession();
   try{
-    cfg=await api('getConfig',{});
-    if(cfg.ok){
-      fill('fcat',cfg.categories,'Select...');
-      fill('fproj',cfg.projects,cfg.projects.length===1?null:'Select...');
-    }
-    const names=await api('getDropdownNames',{});
-    if(names.ok) dropdownNames=names.names||[];
+    const [c,n]=await Promise.all([api('getConfig',{}),api('getDropdownNames',{})]);
+    if(c.ok){applyConfig(c);store.set('custody.cfg',c)}
+    if(n.ok){dropdownNames=n.names||[];store.set('custody.names',dropdownNames)}
   }catch(e){console.error(e)}
-  const now=new Date(); $('fdate').value=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
 }
 async function doLogin(){
-  $('loginBtn').disabled=true;setMsg('loginMsg','');
+  $('loginBtn').disabled=true;$('loginBtn').textContent='Logging in... / جاري الدخول';setMsg('loginMsg','');
   try{
     const nm=$('lname').value.trim();
     if(dropdownNames.length&&!dropdownNames.some(n=>n.toLowerCase()===nm.toLowerCase())){setMsg('loginMsg','Select your name from the list / اختر اسمك من القائمة','err');return}
@@ -354,15 +367,19 @@ async function doLogin(){
     $('loginView').classList.add('hidden');$('appView').classList.remove('hidden');
     showPage('home');refresh();
   }catch(e){setMsg('loginMsg','Connection problem: '+(e.message||e)+'. Check the Vercel API settings and Apps Script deployment.','err')}
-  finally{$('loginBtn').disabled=false}
+  finally{$('loginBtn').disabled=false;$('loginBtn').textContent='Login / دخول'}
 }
-async function doEngineerLogout(){
-  if(engineerToken)try{await api('logout',{token:engineerToken})}catch(e){}
-  if(adminToken)try{await api('adminLogout',{token:adminToken})}catch(e){}
-  engineerToken=null;adminToken=null;store.del('custody.session');sstore.del('custody.admin');closeMenu();
+function returnToLogin(){
   $('appView').classList.add('hidden');$('loginView').classList.remove('hidden');
   $('adminPage').classList.add('hidden');$('homePage').classList.remove('hidden');
-  $('lname').value='';$('lpin').value='';
+  $('lname').value='';$('lpin').value='';setMsg('loginMsg','');
+  sstore.del('custody.page');
+}
+function doEngineerLogout(){
+  engineerToken=null;store.del('custody.session');closeMenu();
+  setMsg('submitMsg','');
+  if(adminToken){$('hello').textContent='Admin';showPage('admin')}
+  else returnToLogin();
 }
 function expired(){
   engineerToken=null;store.del('custody.session');closeMenu();
@@ -371,12 +388,14 @@ function expired(){
 }
 function showPage(page){
   closeMenu();
+  sstore.set('custody.page',page);
   $('roleBadge').textContent=page==='admin'?'ADMIN':'ENGINEER';
   $('homePage').classList.toggle('hidden',page!=='home');
   $('adminPage').classList.toggle('hidden',page!=='admin');
 }
 async function refresh(){
   if(!engineerToken)return;
+  if(!$('balText').textContent)$('balText').textContent='Loading... / جاري التحميل';
   const r=await api('getMyExpenses',{token:engineerToken});
   if(r.expired)return expired();
   if(!r.ok)return;
@@ -402,10 +421,10 @@ function readImage(file){
   return new Promise((resolve,reject)=>{
     const img=new Image(),url=URL.createObjectURL(file);
     img.onload=()=>{
-      const s=Math.min(1,1400/Math.max(img.width,img.height));
+      const s=Math.min(1,1200/Math.max(img.width,img.height));
       const c=document.createElement('canvas');c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);
       c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);
-      resolve(c.toDataURL('image/jpeg',.75).split(',')[1]);
+      resolve(c.toDataURL('image/jpeg',.7).split(',')[1]);
     };
     img.onerror=()=>reject(new Error('Could not read the photo'));img.src=url;
   });
@@ -418,7 +437,7 @@ async function doSubmit(){
     return setMsg('submitMsg','Please fill all fields.','err');
   const file=$('fimg').files[0];
   if(!file&&!$('fnoreceipt').checked)return setMsg('submitMsg','Take a receipt photo, or tick "No receipt".','err');
-  $('submitBtn').disabled=true;setMsg('submitMsg','Uploading...');
+  $('submitBtn').disabled=true;setMsg('submitMsg','Uploading... please wait a few seconds');
   try{
     if(file)payload.image=await readImage(file);
     const r=await api('submitExpense',{token:engineerToken,payload});
@@ -490,6 +509,7 @@ async function disableEngineer(name){
   try{const r=await api('deleteEngineer',{adminToken,name});if(!r.ok)return setMsg('adminMsg',r.error,'err');setMsg('adminMsg','Engineer disabled. Historical records were kept.','ok');await loadEngineers();}catch(e){setMsg('adminMsg','Connection problem: '+(e.message||e),'err')}
 }
 function showAdminTab(tab){
+  sstore.set('custody.adminTab',tab);
   $('engineersTab').classList.toggle('hidden',tab!=='engineers');$('transfersTab').classList.toggle('hidden',tab!=='transfers');
   $('tabEngineers').classList.toggle('active',tab==='engineers');$('tabTransfers').classList.toggle('active',tab==='transfers');
   if(tab==='transfers')loadTransfers();
@@ -511,13 +531,12 @@ async function markSelectedTransferred(){
 async function downloadTransferTemplate(){
   try{const r=await api('getTransferTemplate',{adminToken});if(!r.ok)return setMsg('transferMsg',r.error,'err');const blob=new Blob([r.csv],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Engineer_Transfer_Template.csv';a.click();URL.revokeObjectURL(a.href);setMsg('transferMsg','Transfer template generated.','ok');}catch(e){setMsg('transferMsg','Connection problem: '+(e.message||e),'err')}
 }
-async function adminLogout(){
-  if(adminToken)try{await api('adminLogout',{token:adminToken})}catch(e){}
-  adminToken=null;sstore.del('custody.admin');setMsg('adminMsg','');
-  if(engineerToken){showPage('home')}
-  else{$('appView').classList.add('hidden');$('loginView').classList.remove('hidden');$('adminPage').classList.add('hidden');$('homePage').classList.remove('hidden')}
+function adminLogout(){
+  adminToken=null;sstore.del('custody.admin');sstore.del('custody.adminTab');setMsg('adminMsg','');closeMenu();
+  if(engineerToken)showPage('home');
+  else returnToLogin();
 }
-function goHome(){ if(!engineerToken){adminLogout();return} showPage('home') }
+function goHome(){ showPage('home') }
 function openAdmin(){ closeMenu(); if(adminToken){showPage('admin');loadEngineers();showAdminTab('engineers')}else openAdminLogin() }
 $('adminPin').addEventListener('keydown',e=>{if(e.key==='Enter')doAdminLogin()});
 makeCombo('lname','lnameList',()=>dropdownNames);
