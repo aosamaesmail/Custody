@@ -264,6 +264,19 @@ function updateSummaryAfterDecision(decision){
   if(decision==='Needs Clarification')$('sClarify').textContent=Number($('sClarify').textContent||0)+1;
 }
 
+function showTab(tab){
+  const review = $('reviewTab');
+  const transfer = $('transferTab');
+  if(!review || !transfer) return;
+
+  review.classList.toggle('hidden', tab !== 'reviewTab');
+  transfer.classList.toggle('hidden', tab !== 'transferTab');
+  $('tabReview').classList.toggle('active', tab === 'reviewTab');
+  $('tabTransfer').classList.toggle('active', tab === 'transferTab');
+
+  if(tab === 'transferTab') loadReadyTransfers();
+}
+
 async function loadReadyTransfers(){
   msg('readyMsg','Loading...');
   try{
