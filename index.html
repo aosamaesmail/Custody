@@ -159,13 +159,13 @@ input:focus,select:focus,textarea:focus{outline:3px solid rgba(207,47,140,.13);b
 @media(max-width:700px){.home-grid{grid-template-columns:1fr}.hero{padding:20px}.hero-logo{max-width:58%}}
 
 
-/* ===== Loading & result dialogs ===== */
+/* Loading and submission result dialogs */
 .app-dialog-backdrop{position:fixed;inset:0;z-index:99999;background:rgba(9,9,11,.52);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:20px}
 .app-dialog-backdrop.hidden{display:none}
-.app-dialog{width:min(390px,92vw);background:#fff;border-radius:20px;padding:26px 24px;box-shadow:0 24px 70px rgba(0,0,0,.28);text-align:center;border:1px solid #eee}
+.app-dialog{width:min(390px,92vw);background:#fff;border-radius:20px;padding:26px 24px;box-shadow:0 24px 70px rgba(0,0,0,.28);text-align:center}
 .app-spinner{width:48px;height:48px;margin:0 auto 17px;border-radius:50%;border:4px solid #ececf0;border-top-color:var(--brand);animation:appSpin .75s linear infinite}
 @keyframes appSpin{to{transform:rotate(360deg)}}
-.app-dialog h3{margin:0 0 7px;font-size:20px}.app-dialog p{margin:0;color:var(--muted);line-height:1.5}
+.app-dialog h3{margin:0 0 7px}.app-dialog p{margin:0;color:var(--muted)}
 .app-result-icon{width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 15px;font-size:27px;font-weight:900}
 .app-result-icon.ok{background:#dcfce7;color:#15803d}.app-result-icon.err{background:#fee2e2;color:#dc2626}
 .app-dialog button{margin-top:19px;min-width:120px}
@@ -360,6 +360,24 @@ let myExpenseRows=[];
 let selectedReceiptFile=null;
 
 function $(id){return document.getElementById(id)}
+
+function showLoadingDialog(title,text){
+  $('loadingTitle').textContent=title||'Please wait';
+  $('loadingText').textContent=text||'Processing...';
+  $('loadingDialog').classList.remove('hidden');
+}
+function hideLoadingDialog(){$('loadingDialog').classList.add('hidden')}
+function showResultDialog(ok,title,text){
+  hideLoadingDialog();
+  const icon=$('resultIcon');
+  icon.className='app-result-icon '+(ok?'ok':'err');
+  icon.textContent=ok?'✓':'!';
+  $('resultTitle').textContent=title||(ok?'Success':'Failed');
+  $('resultText').textContent=text||'';
+  $('resultDialog').classList.remove('hidden');
+}
+function closeResultDialog(){$('resultDialog').classList.add('hidden')}
+
 function setMsg(id,text,cls){const e=$(id);e.textContent=text;e.className='msg '+(cls||'')}
 function fill(id,list,placeholder){
   const s=$(id);s.innerHTML='';
@@ -708,19 +726,10 @@ init();
 </script>
 
 <div id="loadingDialog" class="app-dialog-backdrop hidden">
-  <div class="app-dialog">
-    <div class="app-spinner"></div>
-    <h3 id="loadingTitle">Please wait</h3>
-    <p id="loadingText">Processing...</p>
-  </div>
+  <div class="app-dialog"><div class="app-spinner"></div><h3 id="loadingTitle">Please wait</h3><p id="loadingText">Processing...</p></div>
 </div>
 <div id="resultDialog" class="app-dialog-backdrop hidden">
-  <div class="app-dialog">
-    <div id="resultIcon" class="app-result-icon ok">✓</div>
-    <h3 id="resultTitle">Completed</h3>
-    <p id="resultText"></p>
-    <button class="primary" onclick="closeResultDialog()">OK</button>
-  </div>
+  <div class="app-dialog"><div id="resultIcon" class="app-result-icon ok">✓</div><h3 id="resultTitle">Completed</h3><p id="resultText"></p><button class="primary" onclick="closeResultDialog()">OK</button></div>
 </div>
 
 </body>
