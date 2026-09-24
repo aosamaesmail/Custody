@@ -114,6 +114,11 @@ button:disabled{opacity:.55;cursor:not-allowed}
 
       <div class="row" style="margin-top:14px;align-items:end">
         <div>
+          <label>Engineer</label>
+          <input id="transferEngineerFilter" list="transferEngineerList" placeholder="All Engineers / Search Engineer" oninput="renderTransferEngineerSummary($('transferStatusFilter').value)">
+          <datalist id="transferEngineerList"></datalist>
+        </div>
+        <div>
           <label>Transfer Status</label>
           <select id="transferStatusFilter" onchange="loadTransferView()">
             <option value="Pending">Pending</option>
@@ -322,7 +327,8 @@ async function loadTransferView(){
     if(r.expired)return expired();
     if(!r.ok)throw new Error(r.error);
     transferViewRows=r.rows||[];
-    $('transferViewTotal').textContent=Number(r.total||0).toFixed(2)+' EGP';
+    const names=[...new Set(transferViewRows.map(x=>x.engineer).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+    $('transferEngineerList').innerHTML=names.map(n=>'<option value="'+esc(n)+'"></option>').join('');
     renderTransferEngineerSummary(status);
   }catch(e){
     $('transferEngineerTable').innerHTML='<tr><td colspan="5" class="err">'+esc(e.message)+'</td></tr>';
@@ -330,9 +336,12 @@ async function loadTransferView(){
 }
 function renderTransferEngineerSummary(status){
   const body=$('transferEngineerTable');body.innerHTML='';
+  const engineerFilter=String($('transferEngineerFilter').value||'').trim().toLowerCase();
+  const sourceRows=engineerFilter ? transferViewRows.filter(x=>String(x.engineer||'').toLowerCase().includes(engineerFilter)) : transferViewRows;
+  $('transferViewTotal').textContent=sourceRows.reduce((s,x)=>s+Number(x.amount||0),0).toFixed(2)+' EGP';
   if(status==='Transferred'){
     const groups={};
-    transferViewRows.forEach(x=>{
+    sourceRows.forEach(x=>{
       const key=x.transferBatchId||('LEGACY-'+x.engineer+'-'+(x.transferDate||''));
       if(!groups[key])groups[key]={batchId:x.transferBatchId||'Legacy Transfer',engineer:x.engineer,date:x.transferDate||'',count:0,total:0};
       groups[key].count++;groups[key].total+=Number(x.amount||0);
@@ -354,7 +363,7 @@ function renderTransferEngineerSummary(status){
   }
 
   const groups={};
-  transferViewRows.forEach(x=>{
+  sourceRows.forEach(x=>{
     if(!groups[x.engineer])groups[x.engineer]={count:0,total:0};
     groups[x.engineer].count++;groups[x.engineer].total+=Number(x.amount||0);
   });
