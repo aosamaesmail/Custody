@@ -154,6 +154,10 @@ button:disabled{opacity:.55;cursor:not-allowed}
       </div>
 
       <div id="transferActionArea" class="transfer-actions hidden" style="margin-top:14px">
+        <div>
+          <label>Expense Selection</label>
+          <button id="selectAllTransferBtn" class="secondary" style="width:100%" onclick="toggleAllTransferExpenses()">Select All</button>
+        </div>
         <div><label>Transfer Reference</label><input id="transferViewReference" placeholder="Bank transfer / batch reference"></div>
         <div><button class="primary" style="width:100%" onclick="markTransferViewSelected()">Mark Selected as Transferred</button></div>
       </div>
@@ -363,8 +367,18 @@ function showEngineerTransferExpenses(name){
     body.appendChild(tr);
   });
   $('transferActionArea').classList.toggle('hidden',status!=='Needs Transfer');
+  const selectAllBtn=$('selectAllTransferBtn');
+  if(selectAllBtn)selectAllBtn.textContent='Select All';
   $('transferExpenseCard').classList.remove('hidden');
   $('transferExpenseCard').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function toggleAllTransferExpenses(){
+  const boxes=Array.from(document.querySelectorAll('#transferExpenseTable input[type=checkbox]'));
+  if(!boxes.length)return;
+  const shouldCheck=boxes.some(x=>!x.checked);
+  boxes.forEach(x=>x.checked=shouldCheck);
+  const btn=$('selectAllTransferBtn');
+  if(btn)btn.textContent=shouldCheck?'Deselect All':'Select All';
 }
 async function markTransferViewSelected(){
   const ids=Array.from(document.querySelectorAll('#transferExpenseTable input[type=checkbox]:checked')).map(x=>x.dataset.id);
