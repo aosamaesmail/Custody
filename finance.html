@@ -134,7 +134,7 @@ let financeToken=null, reviewerName='', allRows=[], shownRows=[], selected=null,
 const FEED_BATCH=15;
 
 function $(id){return document.getElementById(id)}
-function msg(id,t,c){const e=$(id);e.textContent=t||'';e.className='msg '+(c||'')}
+function msg(id,t,c){const e=$(id);if(!e)return;e.textContent=t||'';e.className='msg '+(c||'')}
 async function api(action,data){
   const res=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action,data:data||{}}),redirect:'follow'});
   const text=await res.text();
@@ -165,7 +165,6 @@ function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&l
 
 async function loadQueue(){
   if(!financeToken)return;
-  msg('reviewMsg','');
   try{
     const r=await api('getFinanceExpenses',{financeToken,filters:{status:$('fStatus').value,from:$('fFrom').value,to:$('fTo').value}});
     if(r.expired)return expired();
