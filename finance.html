@@ -458,8 +458,102 @@ main .container,
   .filters{grid-template-columns:1fr!important}
 }
 
+
+/* === Hard override: review workspace === */
+#reviewTab{width:100%!important;max-width:none!important}
+#reviewTab #feed.feed{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  column-gap:20px!important;
+  row-gap:20px!important;
+  width:100%!important;
+  max-width:none!important;
+  margin:18px 0 0!important;
+}
+#reviewTab #feed.feed>.feed-card{
+  width:100%!important;
+  max-width:none!important;
+  min-width:0!important;
+  box-sizing:border-box!important;
+}
+#reviewTab .feed-receipt{
+  width:100%!important;
+  min-height:420px!important;
+}
+#reviewTab .feed-receipt>img{
+  display:block!important;
+  width:100%!important;
+  max-width:none!important;
+  height:auto!important;
+  max-height:none!important;
+  object-fit:contain!important;
+}
+.search-select{position:relative!important}
+.search-menu{
+  display:block;
+  position:absolute!important;
+  top:calc(100% + 5px)!important;
+  left:0!important;
+  right:0!important;
+  width:100%!important;
+  box-sizing:border-box!important;
+  z-index:999999!important;
+  max-height:240px!important;
+  overflow-y:auto!important;
+  background:#fff!important;
+  border:1px solid #d4d4d8!important;
+  border-radius:10px!important;
+  box-shadow:0 12px 30px rgba(0,0,0,.18)!important;
+  padding:5px!important;
+}
+.search-menu.hidden{display:none!important}
+.search-option{display:block!important;padding:9px 10px!important;border-radius:7px!important;background:#fff!important;cursor:pointer!important}
+.search-option:hover{background:#fce7f3!important}
+.quick-busy.hidden{display:none!important}
+.quick-spinner{width:17px;height:17px;border-radius:50%;border:2px solid rgba(255,255,255,.35);border-top-color:#cf2f8c;animation:appSpin .65s linear infinite}
+@media(min-width:1300px){
+  .wrap{max-width:1580px!important;width:calc(100% - 32px)!important}
+  #reviewTab #feed.feed{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+@media(max-width:900px){
+  #reviewTab #feed.feed{grid-template-columns:1fr!important}
+}
+
 </style>
-<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js">
+function enforceReviewWorkspace(){
+  const wrap=document.querySelector('.wrap');
+  if(wrap){
+    wrap.style.setProperty('max-width','1580px','important');
+    wrap.style.setProperty('width','calc(100% - 32px)','important');
+    wrap.style.setProperty('box-sizing','border-box','important');
+  }
+  const feed=document.getElementById('feed');
+  if(feed){
+    feed.style.setProperty('display','grid','important');
+    feed.style.setProperty('width','100%','important');
+    feed.style.setProperty('max-width','none','important');
+    feed.style.setProperty('margin','18px 0 0','important');
+    feed.style.setProperty('gap','20px','important');
+    feed.style.setProperty('grid-template-columns',window.innerWidth>900?'repeat(2,minmax(0,1fr))':'1fr','important');
+  }
+  document.querySelectorAll('#feed .feed-card').forEach(card=>{
+    card.style.setProperty('width','100%','important');
+    card.style.setProperty('max-width','none','important');
+    card.style.setProperty('min-width','0','important');
+  });
+  document.querySelectorAll('#feed .feed-receipt img').forEach(img=>{
+    img.style.setProperty('display','block','important');
+    img.style.setProperty('width','100%','important');
+    img.style.setProperty('max-width','none','important');
+    img.style.setProperty('height','auto','important');
+    img.style.setProperty('max-height','none','important');
+  });
+}
+window.addEventListener('resize',enforceReviewWorkspace);
+document.addEventListener('DOMContentLoaded',()=>requestAnimationFrame(enforceReviewWorkspace));
+
+</script>
 </head>
 <body>
 <div id="loginView" class="login">
@@ -706,6 +800,7 @@ function applyLocalFilters(){
   renderMore();
 }
 function renderMore(){
+  requestAnimationFrame(enforceReviewWorkspace);
   const feed=$('feed');
   const next=shownRows.slice(renderedCount,renderedCount+FEED_BATCH);
   next.forEach(x=>feed.appendChild(buildFeedCard(x)));

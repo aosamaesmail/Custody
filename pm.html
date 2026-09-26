@@ -253,8 +253,293 @@ main .container,
   #feed{grid-template-columns:1fr!important}
 }
 
+
+/* ===== FINAL receipt workspace + filter correction ===== */
+
+/* The old .feed rule had max-width:860px; this is what shrank both cards. */
+.feed,
+#feed{
+  max-width:1540px!important;
+  width:100%!important;
+  margin:18px auto 0!important;
+}
+.wrap{
+  max-width:1580px!important;
+  width:100%!important;
+  padding-left:20px!important;
+  padding-right:20px!important;
+}
+#feed{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:20px!important;
+  align-items:start!important;
+}
+#feed>.feed-card{
+  width:100%!important;
+  max-width:none!important;
+  min-width:0!important;
+  margin:0!important;
+  padding:20px!important;
+}
+
+/* Larger receipt preview follows the full ~700-750px card width */
+.feed-receipt{
+  width:100%!important;
+  min-height:360px!important;
+  margin:10px 0 12px!important;
+  overflow:hidden!important;
+}
+.feed-receipt img,
+.feed-card img,
+.receipt-img{
+  display:block!important;
+  width:100%!important;
+  max-width:100%!important;
+  height:auto!important;
+  max-height:none!important;
+  object-fit:contain!important;
+}
+
+/* Compact only the metadata, NOT the card/photo */
+.feed-head{
+  padding-bottom:8px!important;
+  margin-bottom:7px!important;
+}
+.feed-meta{
+  gap:3px 14px!important;
+  margin-bottom:4px!important;
+}
+.feed-meta .detail{
+  padding:4px 0!important;
+}
+.feed-desc{
+  padding:6px 0!important;
+}
+.feed-comment{
+  margin-top:7px!important;
+}
+.feed-comment label{
+  margin:0 0 4px!important;
+}
+.feed-comment textarea{
+  height:56px!important;
+  min-height:56px!important;
+}
+
+/* One clean, symmetrical filter row */
+.filters{
+  display:grid!important;
+  grid-template-columns:
+    minmax(220px,1.25fr)
+    minmax(180px,.9fr)
+    minmax(210px,1fr)
+    minmax(170px,.82fr)
+    minmax(170px,.82fr)
+    105px!important;
+  gap:12px!important;
+  align-items:end!important;
+  overflow:visible!important;
+}
+.filters>div{
+  position:relative!important;
+  min-width:0!important;
+  width:100%!important;
+}
+.filters label{
+  display:block!important;
+  height:18px!important;
+  line-height:18px!important;
+  margin:0 0 6px!important;
+}
+.filters input,
+.filters select,
+.filters button.secondary,
+.filters .search-select>input{
+  height:42px!important;
+  min-height:42px!important;
+  width:100%!important;
+  margin:0!important;
+}
+.filters .refresh{
+  display:flex!important;
+  align-items:flex-end!important;
+}
+.filters .refresh button{
+  height:42px!important;
+  min-height:42px!important;
+}
+
+/* Search dropdown is a floating popup; it must never push filters/cards down */
+.search-select{
+  position:relative!important;
+  width:100%!important;
+}
+.search-menu{
+  position:absolute!important;
+  z-index:20000!important;
+  top:calc(100% + 6px)!important;
+  left:0!important;
+  right:0!important;
+  width:100%!important;
+  max-height:250px!important;
+  overflow-y:auto!important;
+  padding:6px!important;
+  margin:0!important;
+  background:#fff!important;
+  border:1px solid #d4d4d8!important;
+  border-radius:11px!important;
+  box-shadow:0 16px 38px rgba(0,0,0,.16)!important;
+}
+.search-menu.hidden{
+  display:none!important;
+}
+.search-option{
+  display:block!important;
+  width:100%!important;
+  padding:9px 10px!important;
+  margin:0!important;
+  border-radius:7px!important;
+  background:#fff!important;
+  cursor:pointer!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+.search-option:hover{
+  background:#fce7f3!important;
+  color:#9d174d!important;
+}
+.search-clear{
+  position:absolute!important;
+  z-index:3!important;
+  right:7px!important;
+  top:50%!important;
+  transform:translateY(-50%)!important;
+  width:28px!important;
+  height:28px!important;
+  min-height:28px!important;
+  padding:0!important;
+  margin:0!important;
+}
+
+/* Desktop target: two ~700-750px cards */
+@media(min-width:1480px){
+  .wrap{max-width:1580px!important}
+  .feed,#feed{max-width:1540px!important}
+  #feed{grid-template-columns:repeat(2,minmax(700px,1fr))!important}
+}
+@media(max-width:1180px){
+  .filters{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  }
+  .filters .refresh{grid-column:auto!important}
+}
+@media(max-width:900px){
+  .wrap{padding-left:12px!important;padding-right:12px!important}
+  #feed{grid-template-columns:1fr!important}
+  .filters{grid-template-columns:1fr 1fr!important}
+}
+@media(max-width:600px){
+  .filters{grid-template-columns:1fr!important}
+}
+
+
+/* === Hard override: review workspace === */
+#reviewTab{width:100%!important;max-width:none!important}
+#reviewTab #feed.feed{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  column-gap:20px!important;
+  row-gap:20px!important;
+  width:100%!important;
+  max-width:none!important;
+  margin:18px 0 0!important;
+}
+#reviewTab #feed.feed>.feed-card{
+  width:100%!important;
+  max-width:none!important;
+  min-width:0!important;
+  box-sizing:border-box!important;
+}
+#reviewTab .feed-receipt{
+  width:100%!important;
+  min-height:420px!important;
+}
+#reviewTab .feed-receipt>img{
+  display:block!important;
+  width:100%!important;
+  max-width:none!important;
+  height:auto!important;
+  max-height:none!important;
+  object-fit:contain!important;
+}
+.search-select{position:relative!important}
+.search-menu{
+  display:block;
+  position:absolute!important;
+  top:calc(100% + 5px)!important;
+  left:0!important;
+  right:0!important;
+  width:100%!important;
+  box-sizing:border-box!important;
+  z-index:999999!important;
+  max-height:240px!important;
+  overflow-y:auto!important;
+  background:#fff!important;
+  border:1px solid #d4d4d8!important;
+  border-radius:10px!important;
+  box-shadow:0 12px 30px rgba(0,0,0,.18)!important;
+  padding:5px!important;
+}
+.search-menu.hidden{display:none!important}
+.search-option{display:block!important;padding:9px 10px!important;border-radius:7px!important;background:#fff!important;cursor:pointer!important}
+.search-option:hover{background:#fce7f3!important}
+.quick-busy.hidden{display:none!important}
+.quick-spinner{width:17px;height:17px;border-radius:50%;border:2px solid rgba(255,255,255,.35);border-top-color:#cf2f8c;animation:appSpin .65s linear infinite}
+@media(min-width:1300px){
+  .wrap{max-width:1580px!important;width:calc(100% - 32px)!important}
+  #reviewTab #feed.feed{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+@media(max-width:900px){
+  #reviewTab #feed.feed{grid-template-columns:1fr!important}
+}
+
 </style>
-<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js">
+function enforceReviewWorkspace(){
+  const wrap=document.querySelector('.wrap');
+  if(wrap){
+    wrap.style.setProperty('max-width','1580px','important');
+    wrap.style.setProperty('width','calc(100% - 32px)','important');
+    wrap.style.setProperty('box-sizing','border-box','important');
+  }
+  const feed=document.getElementById('feed');
+  if(feed){
+    feed.style.setProperty('display','grid','important');
+    feed.style.setProperty('width','100%','important');
+    feed.style.setProperty('max-width','none','important');
+    feed.style.setProperty('margin','18px 0 0','important');
+    feed.style.setProperty('gap','20px','important');
+    feed.style.setProperty('grid-template-columns',window.innerWidth>900?'repeat(2,minmax(0,1fr))':'1fr','important');
+  }
+  document.querySelectorAll('#feed .feed-card').forEach(card=>{
+    card.style.setProperty('width','100%','important');
+    card.style.setProperty('max-width','none','important');
+    card.style.setProperty('min-width','0','important');
+  });
+  document.querySelectorAll('#feed .feed-receipt img').forEach(img=>{
+    img.style.setProperty('display','block','important');
+    img.style.setProperty('width','100%','important');
+    img.style.setProperty('max-width','none','important');
+    img.style.setProperty('height','auto','important');
+    img.style.setProperty('max-height','none','important');
+  });
+}
+window.addEventListener('resize',enforceReviewWorkspace);
+document.addEventListener('DOMContentLoaded',()=>requestAnimationFrame(enforceReviewWorkspace));
+
+</script>
 </head>
 <body>
 <div id="loginView" class="login">
@@ -491,6 +776,7 @@ function applyLocalFilters(){
   renderMore();
 }
 function renderMore(){
+  requestAnimationFrame(enforceReviewWorkspace);
   const feed=$('feed');
   const next=shownRows.slice(renderedCount,renderedCount+FEED_BATCH);
   next.forEach(x=>feed.appendChild(buildFeedCard(x)));
