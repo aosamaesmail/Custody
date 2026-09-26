@@ -176,6 +176,107 @@ input:focus,select:focus,textarea:focus{outline:3px solid rgba(207,47,140,.13);b
 }
 @media(max-width:600px){.filters{grid-template-columns:1fr!important}}
 
+
+/* ===== PM V17 visual tuning from deployed screenshot ===== */
+
+/* Use more of the desktop width */
+.wrap{
+  max-width:1700px!important;
+  width:calc(100% - 28px)!important;
+}
+
+/* Review cards: two large equal columns */
+.feed,#feed{
+  max-width:1660px!important;
+  width:100%!important;
+}
+#feed{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:18px!important;
+}
+#feed>.feed-card{
+  padding:18px!important;
+}
+
+/* Keep header/detail section shallow so the receipt starts sooner */
+.feed-head{
+  padding-bottom:5px!important;
+  margin-bottom:4px!important;
+}
+.feed-head h3{
+  margin:0 0 2px!important;
+}
+.feed-meta{
+  margin:0 0 2px!important;
+  gap:2px 12px!important;
+}
+.feed-meta .detail{
+  padding:3px 0!important;
+  line-height:1.15!important;
+}
+.feed-desc{
+  padding:4px 0 5px!important;
+  margin:0!important;
+  line-height:1.15!important;
+}
+
+/* Receipt itself gets the space */
+.feed-receipt{
+  margin:5px 0 10px!important;
+  width:100%!important;
+}
+.feed-receipt img{
+  width:100%!important;
+  max-width:100%!important;
+  height:auto!important;
+  max-height:none!important;
+  object-fit:contain!important;
+}
+
+/* Comment stays usable but shallow */
+.feed-comment{
+  margin-top:5px!important;
+}
+.feed-comment textarea{
+  height:50px!important;
+  min-height:50px!important;
+}
+
+/* More balanced filter widths */
+.filters{
+  grid-template-columns:
+    minmax(250px,1.35fr)
+    minmax(190px,.95fr)
+    minmax(220px,1.05fr)
+    minmax(180px,.85fr)
+    minmax(180px,.85fr)
+    105px!important;
+}
+
+/* Search dropdown styling */
+.search-menu{
+  top:calc(100% + 6px)!important;
+  min-width:100%!important;
+  max-height:260px!important;
+}
+.search-option{
+  min-height:36px!important;
+  display:flex!important;
+  align-items:center!important;
+}
+
+/* Do not show blank "All" as a visually empty option */
+.search-option[data-v=""]::after{
+  content:"All"!important;
+}
+
+/* At common 1920 desktop widths, preserve large cards */
+@media(min-width:1600px){
+  .wrap{max-width:1700px!important}
+  .feed,#feed{max-width:1660px!important}
+  #feed{grid-template-columns:repeat(2,minmax(760px,1fr))!important}
+}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 </head>
