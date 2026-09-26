@@ -270,6 +270,47 @@ input:focus,select:focus,textarea:focus{outline:3px solid rgba(207,47,140,.13);b
   .stats{grid-template-columns:repeat(2,minmax(0,1fr))!important}
 }
 
+
+/* ===== Finance Transfer filters: match working PM Transfer tab ===== */
+#transferTab .transfer-filter-row{
+  display:grid!important;
+  grid-template-columns:minmax(280px,1.25fr) minmax(220px,.9fr) minmax(220px,.85fr)!important;
+  gap:14px!important;
+  align-items:end!important;
+}
+#transferTab .transfer-filter-row>div{
+  min-width:0!important;
+  width:100%!important;
+}
+#transferTab .transfer-filter-row label,
+#transferTab .transfer-filter-row small{
+  display:block!important;
+  margin:0 0 6px!important;
+}
+#transferTab .transfer-filter-row input,
+#transferTab .transfer-filter-row select{
+  width:100%!important;
+  height:42px!important;
+  min-height:42px!important;
+  box-sizing:border-box!important;
+}
+#transferTab .transfer-total{
+  min-height:42px!important;
+  display:flex!important;
+  align-items:center!important;
+}
+@media(max-width:900px){
+  #transferTab .transfer-filter-row{
+    grid-template-columns:1fr!important;
+    gap:10px!important;
+  }
+  #transferTab .transfer-filter-row input,
+  #transferTab .transfer-filter-row select{
+    height:44px!important;
+    min-height:44px!important;
+  }
+}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 </head>
@@ -337,14 +378,19 @@ input:focus,select:focus,textarea:focus{outline:3px solid rgba(207,47,140,.13);b
         <button class="secondary" onclick="loadTransferView()">Refresh</button>
       </div>
 
-      <div class="row" style="margin-top:14px;align-items:end">
+      <div class="row transfer-filter-row" style="margin-top:14px;align-items:end">
         <div>
           <label>Engineer</label>
-          <div class="search-select"><input id="transferEngineerFilter" placeholder="All Engineers" autocomplete="off"><button class="search-clear" type="button" onclick="clearSearchSelect('transferEngineerFilter')">×</button><div id="transferEngineerFilterMenu" class="search-menu hidden"></div></div>
+          <input id="transferEngineerFilter" list="transferEngineerList" placeholder="All Engineers / Search Engineer" oninput="renderTransferEngineerSummary($('transferStatusFilter').value)">
+          <datalist id="transferEngineerList"></datalist>
         </div>
         <div>
           <label>Transfer Status</label>
-          <div class="search-select"><input id="transferStatusFilter" value="Needs Transfer" autocomplete="off"><button class="search-clear" type="button" onclick="setSearchSelect('transferStatusFilter','Needs Transfer')">×</button><div id="transferStatusFilterMenu" class="search-menu hidden"></div></div>
+          <select id="transferStatusFilter" onchange="loadTransferView()">
+            <option value="Pending">Pending</option>
+            <option value="Needs Transfer" selected>Needs Transfer</option>
+            <option value="Transferred">Transferred</option>
+          </select>
         </div>
         <div>
           <small class="muted">Total for selected status</small>
@@ -613,7 +659,7 @@ async function loadTransferView(){
     if(!r.ok)throw new Error(r.error);
     transferViewRows=r.rows||[];
     const names=[...new Set(transferViewRows.map(x=>x.engineer).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
-    updateSearchSelectOptions('transferEngineerFilter',['',...names]);
+    $('transferEngineerList').innerHTML=names.map(n=>'<option value="'+esc(n)+'"></option>').join('');
     renderTransferEngineerSummary(status);
   }catch(e){
     $('transferEngineerTable').innerHTML='<tr><td colspan="5" class="err">'+esc(e.message)+'</td></tr>';
