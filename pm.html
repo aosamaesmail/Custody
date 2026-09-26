@@ -364,195 +364,193 @@ input:focus,select:focus,textarea:focus{outline:3px solid rgba(207,47,140,.13);b
 }
 
 
-/* ===== Eye-comfort Audit Theme =====
-   Warm neutral canvas + muted blue/teal states.
-   Keeps semantic status colors visible without large saturated surfaces.
-*/
+/* ===== Telecomax Portal inspired theme ===== */
 :root{
-  --audit-bg:#f4f6f5;
-  --audit-surface:#ffffff;
-  --audit-surface-soft:#f8faf9;
-  --audit-border:#dce3e0;
-  --audit-text:#26332f;
-  --audit-muted:#6d7975;
-  --audit-nav:#24332f;
-  --audit-accent:#3f6f68;
-  --audit-accent-soft:#e6f0ed;
-  --audit-pending:#8a6d32;
-  --audit-pending-bg:#f7f0df;
-  --audit-approved:#39705d;
-  --audit-approved-bg:#e4f1eb;
-  --audit-rejected:#9a5353;
-  --audit-rejected-bg:#f6e8e8;
-  --audit-clarify:#6c6492;
-  --audit-clarify-bg:#eeebf6;
-  --audit-shadow:0 5px 18px rgba(35,51,47,.055);
+  --tmx-bg:#f7f7f9;
+  --tmx-surface:#ffffff;
+  --tmx-soft:#f3f3f6;
+  --tmx-line:#e3e3e8;
+  --tmx-text:#26262b;
+  --tmx-muted:#72727c;
+  --tmx-dark:#222229;
+  --tmx-dark-2:#303038;
+  --tmx-pink:#c72c7d;
+  --tmx-pink-dark:#a92169;
+  --tmx-pink-soft:#f8e8f1;
+  --tmx-green:#2f7d62;
+  --tmx-green-soft:#e7f4ee;
+  --tmx-red:#b64f55;
+  --tmx-red-soft:#f9e9ea;
+  --tmx-amber:#9a7127;
+  --tmx-amber-soft:#faf1dc;
+  --tmx-purple:#6e5e9b;
+  --tmx-purple-soft:#f0edf8;
 }
 
 html,body{
-  background:var(--audit-bg)!important;
-  color:var(--audit-text)!important;
-}
-body{
-  line-height:1.45!important;
+  background:var(--tmx-bg)!important;
+  color:var(--tmx-text)!important;
 }
 
-/* Top bar: softer than pure black */
+/* Header / navigation */
 .topbar,header{
-  background:var(--audit-nav)!important;
-  color:#f7faf9!important;
-  box-shadow:0 1px 0 rgba(0,0,0,.08)!important;
+  background:var(--tmx-dark)!important;
+  color:#fff!important;
+  border-bottom:3px solid var(--tmx-pink)!important;
+  box-shadow:0 2px 10px rgba(20,20,25,.12)!important;
 }
-.topbar .role-badge,.role-badge{
-  background:var(--audit-accent-soft)!important;
-  color:var(--audit-accent)!important;
+.role-badge,.topbar .role-badge{
+  background:var(--tmx-pink)!important;
+  color:#fff!important;
 }
 
-/* Cards: low glare, clearer separation */
-.card,.stat,.feed-card{
-  background:var(--audit-surface)!important;
-  border:1px solid var(--audit-border)!important;
-  box-shadow:var(--audit-shadow)!important;
+/* Main cards */
+.card,.feed-card,.stat{
+  background:var(--tmx-surface)!important;
+  border:1px solid var(--tmx-line)!important;
+  box-shadow:0 5px 16px rgba(30,30,38,.055)!important;
+}
+.feed-card{
+  border-top:3px solid var(--tmx-pink)!important;
 }
 .stat{
-  border-top:3px solid #b8c8c3!important;
+  border-top:3px solid #d3d3da!important;
 }
-.muted,small{
-  color:var(--audit-muted)!important;
+.stat .num,.stat strong{
+  color:var(--tmx-dark)!important;
 }
+.muted,small{color:var(--tmx-muted)!important}
 
-/* Tabs and primary controls */
+/* Tabs */
 .tabs button,.tab-btn{
-  background:var(--audit-surface)!important;
-  color:var(--audit-text)!important;
-  border:1px solid var(--audit-border)!important;
+  background:#fff!important;
+  color:#55555f!important;
+  border:1px solid var(--tmx-line)!important;
 }
-.tabs button.active,.tab-btn.active,
-button.primary{
-  background:var(--audit-accent)!important;
+.tabs button:hover,.tab-btn:hover{
+  background:var(--tmx-pink-soft)!important;
+  color:var(--tmx-pink-dark)!important;
+}
+.tabs button.active,.tab-btn.active{
+  background:var(--tmx-dark)!important;
   color:#fff!important;
-  border-color:var(--audit-accent)!important;
-}
-button.secondary{
-  background:#eef2f0!important;
-  color:#34443f!important;
-  border-color:#d8e0dd!important;
-}
-button.secondary:hover{
-  background:#e3e9e6!important;
+  border-color:var(--tmx-dark)!important;
+  box-shadow:inset 0 -3px 0 var(--tmx-pink)!important;
 }
 
-/* Inputs: comfortable contrast, less harsh focus */
+/* Inputs / searchable filters */
 input,select,textarea{
-  background:#fbfcfb!important;
-  color:var(--audit-text)!important;
-  border-color:#cfd9d5!important;
+  background:#fff!important;
+  color:var(--tmx-text)!important;
+  border-color:#d7d7de!important;
 }
 input:focus,select:focus,textarea:focus{
-  border-color:var(--audit-accent)!important;
-  box-shadow:0 0 0 3px rgba(63,111,104,.12)!important;
   outline:none!important;
+  border-color:var(--tmx-pink)!important;
+  box-shadow:0 0 0 3px rgba(199,44,125,.11)!important;
 }
 .search-menu{
   background:#fff!important;
-  border-color:var(--audit-border)!important;
+  border-color:#d7d7de!important;
+  box-shadow:0 14px 32px rgba(30,30,38,.14)!important;
 }
 .search-option:hover{
-  background:var(--audit-accent-soft)!important;
-  color:#315b55!important;
+  background:var(--tmx-pink-soft)!important;
+  color:var(--tmx-pink-dark)!important;
 }
 .search-clear{
-  background:#edf1ef!important;
-  color:#596762!important;
+  background:#f0f0f3!important;
+  color:#66666f!important;
 }
 
-/* Receipt image area: neutral surround improves document readability */
+/* Primary/secondary actions */
+button.primary{
+  background:var(--tmx-pink)!important;
+  border-color:var(--tmx-pink)!important;
+  color:#fff!important;
+}
+button.primary:hover{
+  background:var(--tmx-pink-dark)!important;
+  border-color:var(--tmx-pink-dark)!important;
+}
+button.secondary{
+  background:#f0f0f3!important;
+  border-color:#ddddE3!important;
+  color:#404048!important;
+}
+button.secondary:hover{background:#e8e8ed!important}
+
+/* Receipt area */
 .feed-receipt{
-  background:#eef1ef!important;
-  border:1px solid #d8dfdc!important;
+  background:#f1f1f4!important;
+  border:1px solid #dedee4!important;
   border-radius:12px!important;
   padding:5px!important;
   box-sizing:border-box!important;
 }
-.feed-receipt img{
-  border-radius:8px!important;
-}
+.feed-receipt img{border-radius:8px!important}
 
-/* Metadata separators */
-.feed-head,.feed-meta .detail,.feed-desc{
-  border-color:#e5e9e7!important;
-}
-
-/* Status badges: muted semantic colors */
+/* Semantic review states */
 .badge.pending,[data-status="Pending"]{
-  background:var(--audit-pending-bg)!important;
-  color:var(--audit-pending)!important;
+  background:var(--tmx-amber-soft)!important;
+  color:var(--tmx-amber)!important;
 }
 .badge.approved,[data-status="Approved"]{
-  background:var(--audit-approved-bg)!important;
-  color:var(--audit-approved)!important;
+  background:var(--tmx-green-soft)!important;
+  color:var(--tmx-green)!important;
 }
 .badge.rejected,[data-status="Rejected"]{
-  background:var(--audit-rejected-bg)!important;
-  color:var(--audit-rejected)!important;
+  background:var(--tmx-red-soft)!important;
+  color:var(--tmx-red)!important;
 }
 .badge.clarification,[data-status="Needs Clarification"]{
-  background:var(--audit-clarify-bg)!important;
-  color:var(--audit-clarify)!important;
+  background:var(--tmx-purple-soft)!important;
+  color:var(--tmx-purple)!important;
 }
-
-/* Decision buttons: clear but not overly saturated */
 button.approve,.approve-btn{
-  background:#477966!important;
-  border-color:#477966!important;
+  background:var(--tmx-green)!important;
+  border-color:var(--tmx-green)!important;
   color:#fff!important;
 }
 button.reject,.reject-btn{
-  background:#a55f5f!important;
-  border-color:#a55f5f!important;
+  background:var(--tmx-red)!important;
+  border-color:var(--tmx-red)!important;
   color:#fff!important;
 }
 button.clarify,.clarify-btn{
-  background:#756d99!important;
-  border-color:#756d99!important;
+  background:var(--tmx-purple)!important;
+  border-color:var(--tmx-purple)!important;
   color:#fff!important;
 }
 
-/* Tables for long auditing sessions */
-.table thead th,table thead th{
-  background:#e9eeec!important;
-  color:#40504b!important;
-  border-color:#d7dfdc!important;
+/* Tables */
+table thead th,.table thead th{
+  background:var(--tmx-dark)!important;
+  color:#fff!important;
+  border-color:#3b3b44!important;
 }
-.table tbody tr:nth-child(even),table tbody tr:nth-child(even){
-  background:#fafbfa!important;
+table tbody tr:nth-child(even),.table tbody tr:nth-child(even){
+  background:#fafafd!important;
 }
-.table tbody tr:hover,table tbody tr:hover{
-  background:#edf3f0!important;
+table tbody tr:hover,.table tbody tr:hover{
+  background:var(--tmx-pink-soft)!important;
 }
-.table td,table td{
-  border-color:#e3e8e6!important;
-}
+table td,.table td{border-color:#e6e6eb!important}
 
-/* Totals */
-.transfer-total{
-  color:#315f57!important;
-}
-
-/* Loading indicator matches audit palette */
+/* Transfer totals + loading */
+.transfer-total{color:var(--tmx-pink-dark)!important}
 .quick-busy{
-  background:#263a35!important;
+  background:var(--tmx-dark)!important;
   color:#fff!important;
+  border:1px solid #3a3a42!important;
 }
-.quick-spinner{
-  border-top-color:#9bc6ba!important;
-}
+.quick-spinner{border-top-color:var(--tmx-pink)!important}
 
-/* Mobile: slightly warmer canvas and edge-to-edge audit cards */
+/* Mobile remains single-card feed */
 @media(max-width:900px){
-  html,body{background:#eef1ef!important}
+  html,body{background:#f3f3f6!important}
   #feed>.feed-card{
-    box-shadow:0 3px 12px rgba(35,51,47,.06)!important;
+    box-shadow:0 3px 12px rgba(30,30,38,.07)!important;
   }
 }
 
