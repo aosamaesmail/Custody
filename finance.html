@@ -131,6 +131,142 @@ main .container{
   #feed{grid-template-columns:1fr!important}
 }
 
+
+/* ===== Symmetric desktop layout ===== */
+main .container,
+.container{
+  max-width:1540px!important;
+  width:calc(100% - 40px)!important;
+  margin-left:auto!important;
+  margin-right:auto!important;
+}
+
+/* Summary cards: equal widths/heights */
+.stats{
+  display:grid!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  gap:14px!important;
+  align-items:stretch!important;
+}
+.stat{
+  min-width:0!important;
+  min-height:86px!important;
+  padding:16px!important;
+}
+
+/* Receipt Review filter panel: six aligned columns */
+.filters{
+  display:grid!important;
+  grid-template-columns:minmax(210px,1.25fr) minmax(180px,.9fr) minmax(210px,1fr) minmax(170px,.82fr) minmax(170px,.82fr) 100px!important;
+  gap:12px!important;
+  align-items:end!important;
+}
+.filters>div{
+  min-width:0!important;
+  width:100%!important;
+}
+.filters label{
+  display:block!important;
+  min-height:18px!important;
+  margin:0 0 6px!important;
+}
+.filters input,
+.filters select,
+.filters .search-select{
+  width:100%!important;
+  min-width:0!important;
+  box-sizing:border-box!important;
+}
+.filters .search-select{
+  position:relative!important;
+}
+.filters .search-select>input{
+  height:42px!important;
+}
+.filters input[type="date"],
+.filters select{
+  height:42px!important;
+}
+.filters .refresh{
+  display:flex!important;
+  align-items:flex-end!important;
+}
+.filters .refresh button{
+  height:42px!important;
+  margin:0!important;
+}
+
+/* Search menus must float over the page instead of taking layout space */
+.search-menu{
+  position:absolute!important;
+  left:0!important;
+  right:0!important;
+  top:calc(100% + 5px)!important;
+  z-index:10000!important;
+  max-height:240px!important;
+  overflow:auto!important;
+  margin:0!important;
+}
+.search-menu.hidden{display:none!important}
+.search-clear{
+  position:absolute!important;
+  right:7px!important;
+  top:50%!important;
+  transform:translateY(-50%)!important;
+  margin:0!important;
+}
+
+/* Two equal receipt cards */
+#feed{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:20px!important;
+  width:100%!important;
+  align-items:start!important;
+}
+#feed>.feed-card,
+#feed>.card{
+  width:100%!important;
+  min-width:0!important;
+  box-sizing:border-box!important;
+  margin:0!important;
+}
+.feed-card{
+  padding:20px!important;
+}
+.feed-card img,
+.receipt-img{
+  width:100%!important;
+  height:auto!important;
+  max-height:none!important;
+  object-fit:contain!important;
+}
+
+/* Keep card metadata columns balanced */
+.feed-card .details,
+.feed-card .meta-grid{
+  width:100%!important;
+}
+.feed-card textarea{
+  width:100%!important;
+  box-sizing:border-box!important;
+  height:58px!important;
+  min-height:58px!important;
+}
+
+/* Responsive */
+@media(max-width:1180px){
+  .filters{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  }
+}
+@media(max-width:820px){
+  main .container,.container{width:calc(100% - 24px)!important}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .filters{grid-template-columns:1fr!important}
+  #feed{grid-template-columns:1fr!important}
+}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 </head>
