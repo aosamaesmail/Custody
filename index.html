@@ -77,7 +77,7 @@ button:disabled{opacity:.55;cursor:not-allowed}
 .combo-empty{padding:12px 14px;font-size:14px;color:var(--muted)}
 
 /* admin */
-.admin-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.admin-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
 .admin-tabs button{min-height:46px;font-size:15px;border:1px solid var(--border);background:#fff;border-radius:var(--radius);cursor:pointer}
 .admin-tabs button.active{background:#111827;color:#fff;border-color:#111827}
 .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
@@ -101,6 +101,7 @@ button:disabled{opacity:.55;cursor:not-allowed}
 }
 @media(max-width:520px){
   .row.stack-sm{grid-template-columns:1fr}
+  .admin-tabs{grid-template-columns:1fr}
 }
 @media(max-width:380px){
   .row{grid-template-columns:1fr}
@@ -289,6 +290,7 @@ input:focus,select:focus,textarea:focus{outline:3px solid rgba(207,47,140,.13);b
 
         <div class="admin-tabs">
           <button id="tabEngineers" class="active" onclick="showAdminTab('engineers')">Engineers</button>
+          <button id="tabUsers" onclick="showAdminTab('users')">Management Users</button>
           <button id="tabTransfers" onclick="showAdminTab('transfers')">Transfers</button>
         </div>
 
@@ -318,6 +320,52 @@ input:focus,select:focus,textarea:focus{outline:3px solid rgba(207,47,140,.13);b
           </div>
         </div>
 
+        <div id="usersTab" class="hidden">
+          <div class="card">
+            <div class="top">
+              <div>
+                <h2>Management Users</h2>
+                <div class="search-note">Manage PM, Finance and Admin credentials for the Custody and KM apps.</div>
+              </div>
+              <button class="small" onclick="loadManagementUsers()">Refresh</button>
+            </div>
+
+            <div class="row stack-sm">
+              <div>
+                <label>Search User</label>
+                <input id="managementUserSearch" autocomplete="off" placeholder="Search name" oninput="renderManagementUsers()">
+              </div>
+              <div>
+                <label>Latest Generated Management PIN</label>
+                <input id="managementGeneratedPin" class="pin-box" readonly placeholder="------">
+              </div>
+            </div>
+            <div id="managementUsersMsg" class="msg"></div>
+          </div>
+
+          <div class="card">
+            <h2>PM / Finance / Admin Accounts</h2>
+            <div class="search-note">PINs are shown only immediately after generation/reset. The Google Sheet stores the PIN hash, not the actual PIN.</div>
+            <div class="table-wrap" style="margin-top:10px">
+              <table class="admin-table stack-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Role</th>
+                    <th>KM</th>
+                    <th>Custody</th>
+                    <th>Status</th>
+                    <th>PIN</th>
+                    <th>Last Login</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="managementUsersTable"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
         <div id="transfersTab" class="hidden">
           <div class="card">
             <h2>Engineer Transfers</h2>
@@ -339,8 +387,10 @@ input:focus,select:focus,textarea:focus{outline:3px solid rgba(207,47,140,.13);b
 <div id="adminLoginModal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:50;display:flex;align-items:center;justify-content:center;padding:20px">
   <div class="card" style="width:100%;max-width:380px">
     <h2>Admin Login</h2>
-    <label>Admin PIN</label>
-    <input id="adminPin" type="password" inputmode="numeric" autocomplete="off">
+    <label>Name</label>
+    <input id="adminName" autocomplete="username" placeholder="Enter your name">
+    <label>PIN</label>
+    <input id="adminPin" type="password" inputmode="numeric" maxlength="6" autocomplete="current-password" placeholder="6-digit PIN">
     <button class="primary" onclick="doAdminLogin()">Login</button>
     <button class="secondary" style="width:100%;margin-top:10px" onclick="closeAdminLogin()">Cancel</button>
     <div id="adminLoginMsg" class="msg err"></div>
@@ -633,18 +683,22 @@ function escapeHtml_(s){
 /* ---------- Admin ---------- */
 let engineerRows=[];
 let transferRows=[];
+let managementUserRows=[];
 function openAdminLogin(){
-  $('adminLoginModal').classList.remove('hidden');$('adminPin').value='';setMsg('adminLoginMsg','');
-  setTimeout(()=>$('adminPin').focus(),50);
+  $('adminLoginModal').classList.remove('hidden');
+  $('adminName').value='';
+  $('adminPin').value='';
+  setMsg('adminLoginMsg','');
+  setTimeout(()=>$('adminName').focus(),50);
 }
 function closeAdminLogin(){$('adminLoginModal').classList.add('hidden')}
 async function doAdminLogin(){
   setMsg('adminLoginMsg','');
   showLoadingDialog('Admin Login','Verifying Admin access...');
   try{
-    const r=await api('adminLogin',{pin:$('adminPin').value});
+    const r=await api('adminLogin',{name:$('adminName').value.trim(),pin:$('adminPin').value.trim()});
     if(!r.ok)return setMsg('adminLoginMsg',r.error,'err');
-    adminToken=r.token;sstore.set('custody.admin',{token:r.token});closeAdminLogin();
+    adminToken=r.token;sstore.set('custody.admin',{token:r.token,name:r.name||$('adminName').value.trim(),role:r.role||'Admin'});closeAdminLogin();
     if(!engineerToken){$('hello').textContent='Admin';$('roleBadge').textContent='ADMIN';$('loginView').classList.add('hidden');$('appView').classList.remove('hidden')}
     showPage('admin');await loadEngineers();showAdminTab('engineers');
   }catch(e){setMsg('adminLoginMsg','Connection problem: '+(e.message||e),'err')}
@@ -692,10 +746,138 @@ async function disableEngineer(name){
 }
 function showAdminTab(tab){
   sstore.set('custody.adminTab',tab);
-  $('engineersTab').classList.toggle('hidden',tab!=='engineers');$('transfersTab').classList.toggle('hidden',tab!=='transfers');
-  $('tabEngineers').classList.toggle('active',tab==='engineers');$('tabTransfers').classList.toggle('active',tab==='transfers');
+  $('engineersTab').classList.toggle('hidden',tab!=='engineers');
+  $('usersTab').classList.toggle('hidden',tab!=='users');
+  $('transfersTab').classList.toggle('hidden',tab!=='transfers');
+  $('tabEngineers').classList.toggle('active',tab==='engineers');
+  $('tabUsers').classList.toggle('active',tab==='users');
+  $('tabTransfers').classList.toggle('active',tab==='transfers');
+  if(tab==='users')loadManagementUsers();
   if(tab==='transfers')loadTransfers();
 }
+async function loadManagementUsers(){
+  if(!adminToken)return;
+  setMsg('managementUsersMsg','Loading...');
+  try{
+    const r=await api('getManagementUsers',{adminToken});
+    if(!r.ok){
+      if(r.error==='Admin session required')adminLogout();
+      else setMsg('managementUsersMsg',r.error,'err');
+      return;
+    }
+    managementUserRows=r.users||[];
+    renderManagementUsers();
+    setMsg('managementUsersMsg','');
+  }catch(e){
+    setMsg('managementUsersMsg','Connection problem: '+(e.message||e),'err');
+  }
+}
+
+function renderManagementUsers(){
+  const q=($('managementUserSearch').value||'').trim().toLowerCase();
+  const body=$('managementUsersTable');
+  body.innerHTML='';
+  const rows=managementUserRows.filter(u=>String(u.name||'').toLowerCase().includes(q));
+
+  rows.forEach(u=>{
+    const tr=document.createElement('tr');
+    const cell=(label,content)=>{
+      const td=document.createElement('td');
+      td.dataset.label=label;
+      if(typeof content==='string')td.textContent=content;
+      else td.appendChild(content);
+      tr.appendChild(td);
+      return td;
+    };
+
+    cell('Name',u.name||'');
+
+    const role=document.createElement('select');
+    ['PM','Finance','Admin'].forEach(v=>{
+      const o=document.createElement('option');o.value=v;o.textContent=v;
+      if(v===u.role)o.selected=true;
+      role.appendChild(o);
+    });
+    cell('Role',role);
+
+    const km=document.createElement('input');
+    km.type='checkbox';km.checked=!!u.kmAccess;
+    cell('KM',km).classList.add('check-cell');
+
+    const custody=document.createElement('input');
+    custody.type='checkbox';custody.checked=!!u.custodyAccess;
+    cell('Custody',custody).classList.add('check-cell');
+
+    const active=document.createElement('input');
+    active.type='checkbox';active.checked=!!u.active;
+    cell('Active',active).classList.add('check-cell');
+
+    const pinState=document.createElement('span');
+    pinState.className=u.hasPin?'status-active':'status-inactive';
+    pinState.textContent=u.hasPin?'Generated':'Not set';
+    cell('PIN',pinState);
+
+    let last='Never';
+    if(u.lastLogin){
+      const d=new Date(u.lastLogin);
+      last=isNaN(d.getTime())?String(u.lastLogin):d.toLocaleString();
+    }
+    cell('Last Login',last);
+
+    const actions=document.createElement('div');
+    actions.className='act';
+    const save=document.createElement('button');
+    save.className='secondary';save.textContent='Save Access';
+    save.onclick=()=>saveManagementUser(u.name,role.value,km.checked,custody.checked,active.checked);
+    const pin=document.createElement('button');
+    pin.className='small';pin.textContent=u.hasPin?'Reset PIN':'Generate PIN';
+    pin.onclick=()=>generateManagementUserPin(u.name);
+    actions.appendChild(save);actions.appendChild(pin);
+    const td=cell('',actions);td.className='actions';
+
+    body.appendChild(tr);
+  });
+
+  if(!rows.length){
+    const tr=document.createElement('tr');
+    const td=document.createElement('td');
+    td.colSpan=8;
+    td.textContent='No management users found.';
+    tr.appendChild(td);body.appendChild(tr);
+  }
+}
+
+async function saveManagementUser(name,role,kmAccess,custodyAccess,active){
+  showLoadingDialog('Saving User','Updating access permissions...');
+  try{
+    const r=await api('updateManagementUser',{adminToken,name,role,kmAccess,custodyAccess,active});
+    if(!r.ok)return setMsg('managementUsersMsg',r.error,'err');
+    setMsg('managementUsersMsg',name+' updated successfully.','ok');
+    await loadManagementUsers();
+  }catch(e){
+    setMsg('managementUsersMsg','Connection problem: '+(e.message||e),'err');
+  }finally{
+    hideLoadingDialog();
+  }
+}
+
+async function generateManagementUserPin(name){
+  if(!confirm('Generate/reset the PIN for '+name+'? Any previous PIN will stop working immediately.'))return;
+  showLoadingDialog('Generating PIN','Creating a secure 6-digit PIN...');
+  try{
+    const r=await api('generateManagementPin',{adminToken,name});
+    if(!r.ok)return setMsg('managementUsersMsg',r.error,'err');
+    $('managementGeneratedPin').value=r.pin||'';
+    setMsg('managementUsersMsg','New PIN generated for '+r.name+'. Give this PIN securely to the user.','ok');
+    await loadManagementUsers();
+    showResultDialog(true,'PIN Generated',r.name+' — PIN: '+r.pin);
+  }catch(e){
+    setMsg('managementUsersMsg','Connection problem: '+(e.message||e),'err');
+  }finally{
+    hideLoadingDialog();
+  }
+}
+
 async function loadTransfers(){
   if(!adminToken)return;setMsg('transferMsg','Loading...');
   try{const r=await api('getTransferRows',{adminToken});if(!r.ok)return setMsg('transferMsg',r.error,'err');transferRows=r.rows||[];$('transferTotal').textContent=transferRows.reduce((s,x)=>s+Number(x.amount||0),0).toFixed(2)+' EGP';renderTransfers();setMsg('transferMsg','');}catch(e){setMsg('transferMsg','Connection problem: '+(e.message||e),'err')}
@@ -721,6 +903,7 @@ function adminLogout(){
 function goHome(){ showPage('home') }
 function openAdmin(){ closeMenu(); if(adminToken){showPage('admin');loadEngineers();showAdminTab('engineers')}else openAdminLogin() }
 $('adminPin').addEventListener('keydown',e=>{if(e.key==='Enter')doAdminLogin()});
+$('adminName').addEventListener('keydown',e=>{if(e.key==='Enter')$('adminPin').focus()});
 makeCombo('lname','lnameList',()=>dropdownNames);
 makeCombo('newEngineerName','newEngineerList',()=>dropdownNames.filter(n=>!engineerRows.some(e=>e.name.toLowerCase()===n.toLowerCase())));
 init();
