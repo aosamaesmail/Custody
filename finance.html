@@ -86,6 +86,19 @@ input:focus,select:focus,textarea:focus{outline:3px solid rgba(207,47,140,.13);b
 .quick-busy.hidden{display:none}
 .quick-spinner{width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,.35);border-top-color:#cf2f8c;animation:appSpin .65s linear infinite}
 
+
+/* ===== Receipt review compact two-column layout ===== */
+.quick-busy{left:50%!important;top:50%!important;transform:translate(-50%,-50%)!important;padding:13px 18px!important}
+#feed{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}
+#feed>.feed-card,#feed>.card{margin:0!important;height:auto}
+.feed-card{padding:14px!important}
+.feed-card h3,.feed-card h2{margin:0 0 4px!important;line-height:1.2}
+.feed-meta,.feed-card .muted{margin-top:2px!important;margin-bottom:4px!important;line-height:1.3}
+.feed-card label{margin-top:5px!important;margin-bottom:3px!important}
+.feed-card textarea{min-height:54px!important;height:54px!important;padding:8px 10px!important;resize:vertical}
+.feed-card img,.receipt-img{max-height:430px!important;width:100%!important;object-fit:contain!important;background:#f8f8f8;border-radius:12px}
+@media(max-width:760px){#feed{grid-template-columns:1fr}.feed-card img,.receipt-img{max-height:520px!important}}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 </head>
@@ -130,7 +143,7 @@ input:focus,select:focus,textarea:focus{outline:3px solid rgba(207,47,140,.13);b
   <div class="card">
     <div class="filters">
       <div><label>Engineer</label><div id="fEngineerWrap" class="search-select"><input id="fEngineer" placeholder="All Engineers" autocomplete="off"><button class="search-clear" type="button" onclick="clearSearchSelect('fEngineer')">×</button><div id="fEngineerMenu" class="search-menu hidden"></div></div></div>
-      <div><label>Status</label><div id="fStatusWrap" class="search-select"><input id="fStatus" value="Pending" autocomplete="off"><button class="search-clear" type="button" onclick="setSearchSelect('fStatus','Pending')">×</button><div id="fStatusMenu" class="search-menu hidden"></div></div></div>
+      <div><label>Finance Status</label><div id="fStatusWrap" class="search-select"><input id="fStatus" value="Pending" autocomplete="off"><button class="search-clear" type="button" onclick="setSearchSelect('fStatus','Pending')">×</button><div id="fStatusMenu" class="search-menu hidden"></div></div></div>
       <div><label>Project</label><div id="fProjectWrap" class="search-select"><input id="fProject" placeholder="All Projects" autocomplete="off"><button class="search-clear" type="button" onclick="clearSearchSelect('fProject')">×</button><div id="fProjectMenu" class="search-menu hidden"></div></div></div>
       <div><label>From</label><input id="fFrom" type="date" onchange="loadQueue()"></div>
       <div><label>To</label><input id="fTo" type="date" onchange="loadQueue()"></div>

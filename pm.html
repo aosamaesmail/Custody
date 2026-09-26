@@ -72,6 +72,19 @@ input:focus,select:focus,textarea:focus{outline:3px solid rgba(207,47,140,.13);b
 .app-spinner{width:48px;height:48px;margin:0 auto 17px;border-radius:50%;border:4px solid #ececf0;border-top-color:var(--brand);animation:appSpin .75s linear infinite}
 @keyframes appSpin{to{transform:rotate(360deg)}}.app-dialog h3{margin:0 0 7px}.app-dialog p{margin:0;color:var(--muted)}
 
+
+/* ===== Receipt review compact two-column layout ===== */
+.quick-busy{left:50%!important;top:50%!important;transform:translate(-50%,-50%)!important;padding:13px 18px!important}
+#feed{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}
+#feed>.feed-card,#feed>.card{margin:0!important;height:auto}
+.feed-card{padding:14px!important}
+.feed-card h3,.feed-card h2{margin:0 0 4px!important;line-height:1.2}
+.feed-meta,.feed-card .muted{margin-top:2px!important;margin-bottom:4px!important;line-height:1.3}
+.feed-card label{margin-top:5px!important;margin-bottom:3px!important}
+.feed-card textarea{min-height:54px!important;height:54px!important;padding:8px 10px!important;resize:vertical}
+.feed-card img,.receipt-img{max-height:430px!important;width:100%!important;object-fit:contain!important;background:#f8f8f8;border-radius:12px}
+@media(max-width:760px){#feed{grid-template-columns:1fr}.feed-card img,.receipt-img{max-height:520px!important}}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 </head>
@@ -94,6 +107,7 @@ input:focus,select:focus,textarea:focus{outline:3px solid rgba(207,47,140,.13);b
   <div class="app-dialog"><div class="app-spinner"></div><h3 id="loadingTitle">PM Login</h3><p id="loadingText">Verifying PM access...</p></div>
 </div>
 
+<div id="quickBusy" class="quick-busy hidden"><span class="quick-spinner"></span><span id="quickBusyText">Updating...</span></div>
 <div id="app" class="hidden">
 <header class="topbar">
   <div class="brand">PM Expense Approval</div>
@@ -114,47 +128,13 @@ input:focus,select:focus,textarea:focus{outline:3px solid rgba(207,47,140,.13);b
 
   <div class="card">
     <div class="filters">
-      <div><label>Engineer</label><select id="fEngineer" onchange="applyLocalFilters()"><option value="">All Engineers</option></select></div>
-      <div><label>Status</label><select id="fStatus" onchange="loadQueue()"><option>Pending</option><option>Approved</option><option>Rejected</option><option>Needs Clarification</option><option>All</option></select></div>
-      <div><label>Project</label><select id="fProject" onchange="applyLocalFilters()"><option value="">All Projects</option></select></div>
-      <div><label>From</label><input id="fFrom" type="date" onchange="loadQueue()"></div>
-      <div><label>To</label><input id="fTo" type="date" onchange="loadQueue()"></div>
-      <div class="refresh"><button class="secondary" style="width:100%" onclick="loadQueue()">Refresh</button></div>
-    </div>
-  </div>
-
-  <div id="feed" class="feed"></div>
-  <button id="loadMoreBtn" class="secondary load-more hidden" onclick="renderMore()">Load more receipts</button>
-  <div id="feedEmpty" class="card review-empty hidden">No expenses match these filters.</div>
-  </section>
-
-  <section id="transferTab" class="hidden">
-    <div class="card">
-      <div class="review-head">
-        <div>
-          <h1>Transfers</h1>
-          <div class="muted">View transfer totals grouped by Engineer and drill down to the related expenses.</div>
-        </div>
-        <button class="secondary" onclick="loadTransferView()">Refresh</button>
-      </div>
-
-      <div class="row" style="margin-top:14px;align-items:end">
-        <div>
+      <div>
           <label>Engineer</label>
-          <input id="transferEngineerFilter" list="transferEngineerList" placeholder="All Engineers / Search Engineer" oninput="renderTransferEngineerSummary($('transferStatusFilter').value)">
-          <datalist id="transferEngineerList"></datalist>
+          <div class="search-select"><input id="transferEngineerFilter" placeholder="All Engineers" autocomplete="off"><button class="search-clear" type="button" onclick="clearSearchSelect('transferEngineerFilter')">×</button><div id="transferEngineerFilterMenu" class="search-menu hidden"></div></div>
         </div>
         <div>
           <label>Transfer Status</label>
-          <select id="transferStatusFilter" onchange="loadTransferView()">
-            <option value="Pending">Pending</option>
-            <option value="Needs Transfer" selected>Needs Transfer</option>
-            <option value="Transferred">Transferred</option>
-          </select>
-        </div>
-        <div>
-          <small class="muted">Total for selected status</small>
-          <div id="transferViewTotal" class="transfer-total">0.00 EGP</div>
+          <div class="search-select"><input id="transferStatusFilter" value="Needs Transfer" autocomplete="off"><button class="search-clear" type="button" onclick="setSearchSelect('transferStatusFilter','Needs Transfer')">×</button><div id="transferStatusFilterMenu" class="search-menu hidden"></div></div>
         </div>
       </div>
     </div>
@@ -207,6 +187,51 @@ const FEED_BATCH=15;
 function $(id){return document.getElementById(id)}
 function showLoadingDialog(title,text){$('loadingTitle').textContent=title||'Please wait';$('loadingText').textContent=text||'Processing...';$('loadingDialog').classList.remove('hidden')}
 function hideLoadingDialog(){$('loadingDialog').classList.add('hidden')}
+let quickBusyTimer=null;
+function showQuickBusy(text){
+  $('quickBusyText').textContent=text||'Updating...';
+  clearTimeout(quickBusyTimer);
+  quickBusyTimer=setTimeout(()=>$('quickBusy').classList.remove('hidden'),120);
+}
+function hideQuickBusy(){clearTimeout(quickBusyTimer);$('quickBusy').classList.add('hidden')}
+
+const searchSelects={};
+function initSearchSelect(id,options,onSelect){
+  searchSelects[id]={options:[...options],onSelect};
+  const input=$(id),menu=$(id+'Menu');
+  const render=()=>{
+    const q=input.value.trim().toLowerCase();
+    const vals=searchSelects[id].options.filter(v=>!q||String(v).toLowerCase().includes(q));
+    menu.innerHTML=vals.length?vals.map(v=>'<div class="search-option" data-value="'+esc(v)+'">'+esc(v||'All')+'</div>').join(''):'<div class="search-empty">No matches</div>';
+    menu.querySelectorAll('.search-option').forEach(o=>o.onclick=()=>{
+      input.value=o.dataset.value;menu.classList.add('hidden');
+      if(searchSelects[id].onSelect)searchSelects[id].onSelect(input.value);
+    });
+  };
+  input.onfocus=()=>{input.select();render();menu.classList.remove('hidden')};
+  input.onclick=()=>{input.select();render();menu.classList.remove('hidden')};
+  input.oninput=()=>{render();menu.classList.remove('hidden')};
+  input.onkeydown=e=>{if(e.key==='Escape')menu.classList.add('hidden');if(e.key==='Enter'){const o=menu.querySelector('.search-option');if(o)o.click()}};
+}
+function updateSearchSelectOptions(id,options){
+  if(searchSelects[id])searchSelects[id].options=[...options];
+}
+function clearSearchSelect(id){
+  const input=$(id);input.value='';
+  if(searchSelects[id]&&searchSelects[id].onSelect)searchSelects[id].onSelect('');
+  requestAnimationFrame(()=>{input.focus();input.select()});
+}
+function setSearchSelect(id,value){
+  const input=$(id);input.value=value;
+  if(searchSelects[id]&&searchSelects[id].onSelect)searchSelects[id].onSelect(value);
+  requestAnimationFrame(()=>{input.focus();input.select()});
+}
+document.addEventListener('click',e=>{
+  Object.keys(searchSelects).forEach(id=>{
+    const input=$(id),menu=$(id+'Menu');
+    if(input&&menu&&!input.parentElement.contains(e.target))menu.classList.add('hidden');
+  });
+});
 
 function msg(id,t,c){const e=$(id);if(!e)return;e.textContent=t||'';e.className='msg '+(c||'')}
 async function api(action,data){
@@ -238,10 +263,22 @@ function expired(){logout();msg('loginMsg','Finance session expired. Please log 
 function statusClass(s){if(s==='Approved')return's-approved';if(s==='Rejected')return's-rejected';if(s==='Needs Clarification')return's-clarification';return's-pending'}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 
+
+function initPmFilters(){
+  initSearchSelect('fEngineer',[''],()=>applyLocalFilters());
+  initSearchSelect('fProject',[''],()=>applyLocalFilters());
+  initSearchSelect('fStatus',['Pending','Approved','Rejected','Needs Clarification','All'],()=>loadQueue());
+  initSearchSelect('transferEngineerFilter',[''],()=>renderTransferEngineerSummary($('transferStatusFilter').value));
+  initSearchSelect('transferStatusFilter',['Pending','Needs Transfer','Transferred'],()=>loadTransferView());
+}
+initPmFilters();
+
 async function loadQueue(){
   if(!pmToken)return;
+  const filters={status:$('fStatus').value,from:$('fFrom').value,to:$('fTo').value};
+  showQuickBusy('Applying Receipt Review filters...');
   try{
-    const r=await api('getPMExpenses',{pmToken,filters:{status:$('fStatus').value,from:$('fFrom').value,to:$('fTo').value}});
+    const r=await api('getPMExpenses',{pmToken,filters});
     if(r.expired)return expired();
     if(!r.ok)throw new Error(r.error);
     allRows=r.rows||[];
@@ -249,18 +286,17 @@ async function loadQueue(){
     $('sPending').textContent=s.pending||0;$('sApproved').textContent=s.approved||0;$('sRejected').textContent=s.rejected||0;$('sClarify').textContent=s.clarification||0;
     refillFilters();applyLocalFilters();
   }catch(e){$('feed').innerHTML='<div class="card err">'+esc(e.message)+'</div>'}
+  finally{hideQuickBusy()}
 }
 function refillFilters(){
-  const oldE=$('fEngineer').value,oldP=$('fProject').value;
   const engineers=[...new Set(allRows.map(x=>x.engineer).filter(Boolean))].sort();
   const projects=[...new Set(allRows.map(x=>x.project).filter(Boolean))].sort();
-  $('fEngineer').innerHTML='<option value="">All Engineers</option>'+engineers.map(x=>'<option>'+esc(x)+'</option>').join('');
-  $('fProject').innerHTML='<option value="">All Projects</option>'+projects.map(x=>'<option>'+esc(x)+'</option>').join('');
-  if(engineers.includes(oldE))$('fEngineer').value=oldE;if(projects.includes(oldP))$('fProject').value=oldP;
+  updateSearchSelectOptions('fEngineer',['',...engineers]);
+  updateSearchSelectOptions('fProject',['',...projects]);
 }
 function applyLocalFilters(){
-  const e=$('fEngineer').value,p=$('fProject').value;
-  shownRows=allRows.filter(x=>(!e||x.engineer===e)&&(!p||x.project===p));
+  const e=$('fEngineer').value.trim().toLowerCase(),p=$('fProject').value.trim().toLowerCase();
+  shownRows=allRows.filter(x=>(!e||String(x.engineer||'').toLowerCase().includes(e))&&(!p||String(x.project||'').toLowerCase().includes(p)));
   renderedCount=0;$('feed').innerHTML='';
   $('feedEmpty').classList.toggle('hidden',shownRows.length!==0);
   renderMore();
@@ -319,6 +355,7 @@ async function feedDecision(id,decision){
   const buttons=card?card.querySelectorAll('button'):[];
   buttons.forEach(b=>b.disabled=true);status.textContent='Saving review...';status.className='feed-status';
   try{
+    showQuickBusy(decision==='Approved'?'Approving expense...':decision==='Rejected'?'Rejecting expense...':'Updating expense...');
     const r=await api('reviewPMExpense',{pmToken,id,decision,comment});
     if(r.expired)return expired();if(!r.ok)throw new Error(r.error);
     // Remove immediately from the current Pending feed after any completed review.
@@ -352,17 +389,19 @@ async function loadTransferView(){
   msg('transferViewMsg','');
   $('transferExpenseCard').classList.add('hidden');
   const status=$('transferStatusFilter').value;
+  showQuickBusy('Applying Transfer filters...');
   try{
     const r=await api('getTransferStatusRows',{token:pmToken,status});
     if(r.expired)return expired();
     if(!r.ok)throw new Error(r.error);
     transferViewRows=r.rows||[];
     const names=[...new Set(transferViewRows.map(x=>x.engineer).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
-    $('transferEngineerList').innerHTML=names.map(n=>'<option value="'+esc(n)+'"></option>').join('');
+    updateSearchSelectOptions('transferEngineerFilter',['',...names]);
     renderTransferEngineerSummary(status);
   }catch(e){
     $('transferEngineerTable').innerHTML='<tr><td colspan="5" class="err">'+esc(e.message)+'</td></tr>';
   }
+  finally{hideQuickBusy()}
 }
 function renderTransferEngineerSummary(status){
   const body=$('transferEngineerTable');body.innerHTML='';
