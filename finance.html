@@ -184,6 +184,92 @@ input:focus,select:focus,textarea:focus{outline:3px solid rgba(207,47,140,.13);b
 }
 @media(max-width:600px){.filters{grid-template-columns:1fr!important}}
 
+
+/* ===== Mobile app view: Facebook-style single-card feed ===== */
+@media (max-width: 900px){
+  .wrap{
+    width:100%!important;
+    max-width:none!important;
+    padding-left:10px!important;
+    padding-right:10px!important;
+    box-sizing:border-box!important;
+  }
+
+  /* Always one receipt per row on tablets/phones/app view */
+  .feed,
+  #feed{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr)!important;
+    width:100%!important;
+    max-width:none!important;
+    gap:14px!important;
+    margin:14px auto 0!important;
+  }
+
+  #feed>.feed-card{
+    grid-column:1 / -1!important;
+    width:100%!important;
+    max-width:none!important;
+    min-width:0!important;
+    margin:0!important;
+    padding:14px!important;
+    border-radius:15px!important;
+    box-sizing:border-box!important;
+  }
+
+  /* Use the whole mobile width for the receipt */
+  .feed-receipt{
+    width:100%!important;
+    margin:7px 0 10px!important;
+  }
+  .feed-receipt img,
+  .feed-card img,
+  .receipt-img{
+    display:block!important;
+    width:100%!important;
+    max-width:100%!important;
+    height:auto!important;
+    max-height:none!important;
+    object-fit:contain!important;
+  }
+
+  /* Keep details readable without wasting vertical space */
+  .feed-head{margin-bottom:4px!important;padding-bottom:5px!important}
+  .feed-meta{gap:3px 10px!important}
+  .feed-meta .detail{padding:4px 0!important}
+  .feed-desc{padding:5px 0!important}
+  .feed-comment textarea{height:54px!important;min-height:54px!important}
+
+  /* Summary cards: 2 x 2 on mobile instead of four tiny cards */
+  .stats{
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:9px!important;
+  }
+
+  /* Filters stack cleanly for touch use */
+  .filters{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:9px!important;
+  }
+  .filters>div{width:100%!important}
+  .filters input,
+  .filters select,
+  .filters .search-select>input,
+  .filters .refresh button{
+    width:100%!important;
+    height:44px!important;
+    min-height:44px!important;
+  }
+}
+
+@media (max-width: 520px){
+  .wrap{padding-left:7px!important;padding-right:7px!important}
+  #feed>.feed-card{padding:12px!important;border-radius:13px!important}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 </head>
