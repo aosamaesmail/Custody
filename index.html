@@ -1020,7 +1020,13 @@ function portalSSOStatus_(title,detail){ document.documentElement.classList.remo
 (async function portalAutoLogin(){
  const m=location.hash.match(/(?:^|[&#])sso=([^&]+)/); if(!m)return;
  const portalToken=decodeURIComponent(m[1]);
- const isAdmin=new URLSearchParams(location.search).get('portal')==='admin';
+
+ // IMPORTANT: capture the requested destination BEFORE cleaning the SSO URL.
+ // V5.5 cleaned location.search first, which deleted ?view=history.
+ const params=new URLSearchParams(location.search);
+ const isAdmin=params.get('portal')==='admin';
+ const requestedView=params.get('view')||'home';
+
  portalSSOStatus_('Signing you in…','Using your Telecomax Operations session.');
  history.replaceState(null,'',location.pathname+(isAdmin?'?portal=admin':''));
  try{
@@ -1035,7 +1041,6 @@ function portalSSOStatus_(title,detail){ document.documentElement.classList.remo
   }else{
     if(r.kind!=='engineer'){portalSSOStatus_('Single Sign-On failed','Engineer access is required.');return;}
     engineerToken=r.token;
-    const requestedView=new URLSearchParams(location.search).get('view')||'home';
     store.set('custody.session',{token:r.token,name:r.name||''});
     sstore.set('custody.page',requestedView==='history'?'history':'home');
     location.replace(location.pathname);
