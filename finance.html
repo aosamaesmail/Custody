@@ -1076,5 +1076,15 @@ async function exportEngineerExcel(engineer){
 $('financePin').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
 const saved=getSession();if(saved&&saved.token){financeToken=saved.token;reviewerName=saved.reviewer||'FINANCE';showApp();loadQueue()}
 </script>
+<script>
+(async function portalAutoLogin(){
+ const m=location.hash.match(/(?:^|[&#])sso=([^&]+)/); if(!m)return;
+ const portalToken=decodeURIComponent(m[1]); history.replaceState(null,'',location.pathname+location.search);
+ try{
+  const r=await api('portalSSO',{portalToken,portalRole:'Finance'}); if(!r.ok||!r.token)return;
+  financeToken=r.token; reviewerName=r.name||''; saveSession(); location.reload();
+ }catch(e){console.error('Portal SSO failed',e)}
+})();
+</script>
 </body>
 </html>

@@ -989,5 +989,18 @@ init();
   <div class="app-dialog"><div id="resultIcon" class="app-result-icon ok">✓</div><h3 id="resultTitle">Completed</h3><p id="resultText"></p><button class="primary" onclick="closeResultDialog()">OK</button></div>
 </div>
 
+<script>
+(async function portalAutoLogin(){
+ const m=location.hash.match(/(?:^|[&#])sso=([^&]+)/); if(!m)return;
+ const portalToken=decodeURIComponent(m[1]); history.replaceState(null,'',location.pathname+location.search);
+ try{
+  const r=await api('portalSSO',{portalToken,portalRole:'Engineer'});
+  if(!r.ok||r.kind!=='engineer'||!r.token)return;
+  token=r.token; engineerName=r.name||'';
+  sstore.setItem('custody.token',token); sstore.setItem('custody.engineer',engineerName);
+  location.reload();
+ }catch(e){console.error('Portal SSO failed',e)}
+})();
+</script>
 </body>
 </html>
