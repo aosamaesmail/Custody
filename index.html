@@ -786,7 +786,7 @@ async function doAdminLogin(){
     if(!r.ok)return setMsg('adminLoginMsg',r.error,'err');
     adminToken=r.token;sstore.set('custody.admin',{token:r.token,name:r.name||$('adminName').value.trim(),role:r.role||'Admin'});closeAdminLogin();
     if(!engineerToken){$('hello').textContent='Admin';$('roleBadge').textContent='ADMIN';$('loginView').classList.add('hidden');$('appView').classList.remove('hidden')}
-    showPage('admin');await loadEngineers();showAdminTab('engineers');
+    showPage('admin');await loadEngineers();showAdminTab(new URLSearchParams(location.search).get('view')||'engineers');
   }catch(e){setMsg('adminLoginMsg','Connection problem: '+(e.message||e),'err')}
   finally{hideLoadingDialog()}
 }
@@ -1003,6 +1003,14 @@ init();
 </div>
 
 <script>
+function applyPortalRequestedView(){
+ const q=new URLSearchParams(location.search),v=q.get('view');
+ if(!v)return;
+ if(v==='history'&&engineerToken){openHistory();return;}
+ if(v==='home'&&engineerToken){showPage('home');return;}
+ if(adminToken&&['engineers','users','transfers'].includes(v)){showPage('admin');showAdminTab(v);}
+}
+setTimeout(applyPortalRequestedView,300);
 function portalSSOStatus_(title,detail){ document.documentElement.classList.remove('portal-sso-pending');
  let x=document.getElementById('portalSsoStatus');
  if(!x){x=document.createElement('div');x.id='portalSsoStatus';x.className='sso-status';document.body.appendChild(x)}
