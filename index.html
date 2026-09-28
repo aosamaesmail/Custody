@@ -542,6 +542,7 @@ function restoreSession(){
     engineerToken=s.token;$('hello').textContent='Hello, '+(s.name||'');
     showApp('ENGINEER');
     if(page==='admin'&&adminToken){showPage('admin');loadEngineers();showAdminTab(tab)}
+    else if(page==='history'){openHistory()}
     else{showPage('home');refresh()}
   }else if(adminToken){
     $('hello').textContent='Admin';showApp('ADMIN');showPage('admin');loadEngineers();showAdminTab(tab);
@@ -1003,50 +1004,14 @@ init();
 </div>
 
 <script>
-function requestedCustodyView_(){
- const q=new URLSearchParams(location.search).get('view');
- return q || sessionStorage.getItem('custody.requestedView') || '';
-}
 function applyPortalRequestedView(){
- const v=requestedCustodyView_();
- if(!v) return false;
-
- // Engineer Expense History
- if(v==='history' && engineerToken){
-   if(typeof showPage==='function'){
-     showPage('history');
-     if(typeof loadHistory==='function') loadHistory();
-     sessionStorage.removeItem('custody.requestedView');
-     return true;
-   }
- }
-
- // Engineer New Expense / Home
- if(v==='home' && engineerToken){
-   if(typeof showPage==='function'){
-     showPage('home');
-     sessionStorage.removeItem('custody.requestedView');
-     return true;
-   }
- }
-
- // Admin destinations
- if(adminToken && ['engineers','users','transfers'].includes(v)){
-   showPage('admin');
-   showAdminTab(v);
-   sessionStorage.removeItem('custody.requestedView');
-   return true;
- }
- return false;
+ const q=new URLSearchParams(location.search),v=q.get('view');
+ if(!v)return;
+ if(v==='history'&&engineerToken){sstore.set('custody.page','history');openHistory();return;}
+ if(v==='home'&&engineerToken){sstore.set('custody.page','home');showPage('home');refresh();return;}
+ if(adminToken&&['engineers','users','transfers'].includes(v)){showPage('admin');showAdminTab(v);}
 }
-function applyRequestedCustodyViewAfterInit_(){
- let tries=0;
- const timer=setInterval(()=>{
-   tries++;
-   if(applyPortalRequestedView() || tries>=24) clearInterval(timer);
- },250);
-}
-window.addEventListener('load',()=>setTimeout(applyRequestedCustodyViewAfterInit_,100));
+setTimeout(applyPortalRequestedView,300);
 function portalSSOStatus_(title,detail){ document.documentElement.classList.remove('portal-sso-pending');
  let x=document.getElementById('portalSsoStatus');
  if(!x){x=document.createElement('div');x.id='portalSsoStatus';x.className='sso-status';document.body.appendChild(x)}
@@ -1070,10 +1035,10 @@ function portalSSOStatus_(title,detail){ document.documentElement.classList.remo
   }else{
     if(r.kind!=='engineer'){portalSSOStatus_('Single Sign-On failed','Engineer access is required.');return;}
     engineerToken=r.token;
-    const requestedView=new URLSearchParams(location.search).get('view');
-    if(requestedView) sessionStorage.setItem('custody.requestedView',requestedView);
+    const requestedView=new URLSearchParams(location.search).get('view')||'home';
     store.set('custody.session',{token:r.token,name:r.name||''});
-    location.replace(location.pathname+(requestedView?'?view='+encodeURIComponent(requestedView):''));
+    sstore.set('custody.page',requestedView==='history'?'history':'home');
+    location.replace(location.pathname);
   }
  }catch(e){portalSSOStatus_('Single Sign-On connection error',String(e&&e.message||e));console.error('Portal SSO failed',e)}
 })();
