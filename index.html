@@ -257,7 +257,7 @@ if(location.hash.indexOf('sso=')>=0){
 </script>
 <style>
 html.portal-sso-pending body{visibility:hidden!important}
-html.portal-sso-pending body::before{content:'Signing you in…';visibility:visible!important;position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;background:#020817;color:#fff;font:700 20px Arial,sans-serif}
+html.portal-sso-pending body::before{content:'';visibility:visible!important;position:fixed;inset:0;z-index:2147483647;display:block;background:#020817}
 </style>
 </head>
 <body>
@@ -1027,7 +1027,7 @@ function portalSSOStatus_(title,detail){ document.documentElement.classList.remo
  const isAdmin=params.get('portal')==='admin';
  const requestedView=params.get('view')||'home';
 
- portalSSOStatus_('Signing you in…','Using your Telecomax Operations session.');
+ 
  history.replaceState(null,'',location.pathname+(isAdmin?'?portal=admin':''));
  try{
   const r=await api('portalSSO',{portalToken,portalRole:isAdmin?'Admin':'Engineer'});
@@ -1061,8 +1061,21 @@ function portalSSOStatus_(title,detail){ document.documentElement.classList.remo
     if(r.kind!=='engineer'){portalSSOStatus_('Single Sign-On failed','Engineer access is required.');return;}
     engineerToken=r.token;
     store.set('custody.session',{token:r.token,name:r.name||''});
-    sstore.set('custody.page',requestedView==='history'?'history':'home');
-    location.replace(location.pathname);
+    const engineerView=requestedView==='history'?'history':'home';
+    sstore.set('custody.page',engineerView);
+    document.getElementById('portalSsoStatus')?.remove();
+    document.documentElement.classList.remove('portal-sso-pending');
+    history.replaceState(null,'',location.pathname+'?view='+encodeURIComponent(engineerView));
+    $('hello').textContent='Hello, '+(r.name||'Engineer');
+    $('roleBadge').textContent='ENGINEER';
+    $('loginView').classList.add('hidden');
+    $('appView').classList.remove('hidden');
+    showPage(engineerView);
+    if(engineerView==='history'){
+      if(typeof loadHistory==='function')loadHistory();
+      else if(typeof refreshHistory==='function')refreshHistory();
+    }else if(typeof refresh==='function')refresh();
+    return;
   }
  }catch(e){portalSSOStatus_('Single Sign-On connection error',String(e&&e.message||e));console.error('Portal SSO failed',e)}
 })();
